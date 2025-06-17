@@ -1,10 +1,9 @@
-
 import React, { useState } from "react";
 import * as XLSX from "xlsx";
 import { Input } from "./components/ui/input";
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
-import { FileSpreadsheet, Building, Users } from "lucide-react";
+import { FileSpreadsheet, Building, Users, LogIn, LogOut } from "lucide-react";
 
 export default function Home() {
   const [data, setData] = useState([]);
@@ -14,6 +13,31 @@ export default function Home() {
   const [formValues, setFormValues] = useState({ motivo: "", descripcion: "", ticket: "" });
   const [errors, setErrors] = useState({});
   const [empresaSeleccionada, setEmpresaSeleccionada] = useState(null);
+  const [isLogged, setIsLogged] = useState(false);
+  const [loginModal, setLoginModal] = useState(false);
+  const [login, setLogin] = useState({ user: "", pass: "" });
+  const [loginError, setLoginError] = useState("");
+
+  const SALT = "FLEX-SECURE";
+  const hash = (str) => btoa(SALT + str.trim().toLowerCase());
+
+  const expectedUser = hash("flexxus");
+  const expectedPass = hash("1926");
+
+  const handleLogin = () => {
+    if (hash(login.user) === expectedUser && hash(login.pass) === expectedPass) {
+      setIsLogged(true);
+      setLoginModal(false);
+      setLogin({ user: "", pass: "" });
+      setLoginError("");
+    } else {
+      setLoginError("Credenciales incorrectas");
+    }
+  };
+
+  const handleLogout = () => {
+    setIsLogged(false);
+  };
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -58,38 +82,46 @@ export default function Home() {
 
   const handleModalSubmit = () => {
     if (!validateForm()) return;
-
     setData((prev) =>
-      prev.map((item) => {
-        if (item.empresa === empresaSeleccionada && item.llamadas.length < 5) {
-          return {
-            ...item,
-            llamadas: [...item.llamadas, { ...formValues }],
-          };
-        }
-        return item;
-      })
+      prev.map((item) =>
+        item.empresa === empresaSeleccionada && item.llamadas.length < 5
+          ? { ...item, llamadas: [...item.llamadas, { ...formValues }] }
+          : item
+      )
     );
     setModalOpen(false);
   };
 
   const filteredData = data.filter((item) => {
-  const equipoItem = (item.equipo || "").toLowerCase().trim();
-  const equipoFiltro = equipoFilter.toLowerCase().trim();
-  const empresaItem = (item.empresa || "").toLowerCase().trim();
-  const empresaFiltro = empresaFilter.toLowerCase().trim();
-
-  return (
-    (!equipoFiltro || equipoItem === equipoFiltro) &&
-    (!empresaFiltro || empresaItem.includes(empresaFiltro))
-  );
-});
+    const equipoItem = (item.equipo || "").toLowerCase().trim();
+    const equipoFiltro = equipoFilter.toLowerCase().trim();
+    const empresaItem = (item.empresa || "").toLowerCase().trim();
+    const empresaFiltro = empresaFilter.toLowerCase().trim();
+    return (!equipoFiltro || equipoItem === equipoFiltro) && (!empresaFiltro || empresaItem.includes(empresaFiltro));
+  });
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
-      <h1 className="text-2xl font-bold text-center mb-6">
-        Gestión de Llamadas a Clientes con Soporte Básico
-      </h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-center w-full">Gestión de Llamadas a Clientes con Soporte Básico</h1>
+        <div className="absolute top-4 right-4 flex gap-3">
+          {isLogged ? (
+            <LogOut
+              className="text-red-400 cursor-pointer hover:text-red-600"
+              size={28}
+              title="Cerrar sesión"
+              onClick={handleLogout}
+            />
+          ) : (
+            <LogIn
+              className="text-green-400 cursor-pointer hover:text-green-600"
+              size={28}
+              title="Iniciar sesión"
+              onClick={() => setLoginModal(true)}
+            />
+          )}
+        </div>
+      </div>
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
@@ -120,32 +152,25 @@ export default function Home() {
             </select>
           </div>
         </div>
-        <div className="relative group">
-          <input
-            type="file"
-            id="excelUpload"
-            accept=".xlsx, .xls"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-          <label
-            htmlFor="excelUpload"
-            className="cursor-pointer hover:scale-110 transition-transform"
-            title="Subir archivo Excel"
-          >
-            <FileSpreadsheet size={36} className="text-green-400" />
-          </label>
-          <div className="absolute bottom-full mb-2 right-0 bg-gray-800 text-sm text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-            Subir archivo Excel
+
+        {isLogged && (
+          <div className="relative group">
+            <input type="file" id="excelUpload" accept=".xlsx, .xls" onChange={handleFileUpload} className="hidden" />
+            <label htmlFor="excelUpload" className="cursor-pointer hover:scale-110 transition-transform" title="Subir archivo Excel">
+              <FileSpreadsheet size={36} className="text-green-400" />
+            </label>
+            <div className="absolute bottom-full mb-2 right-0 bg-gray-800 text-sm text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+              Subir archivo Excel
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
+      {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredData.map((item, index) => {
           const llamadasDisponibles = 5 - item.llamadas.length;
-          const bgColor =
-            llamadasDisponibles === 0 ? "bg-red-400/20" : "bg-green-400/20";
+          const bgColor = llamadasDisponibles === 0 ? "bg-red-400/20" : "bg-green-400/20";
           return (
             <Card key={index} className={bgColor}>
               <CardContent className="p-4">
@@ -159,10 +184,7 @@ export default function Home() {
                   ))}
                 </ul>
                 {llamadasDisponibles > 0 && (
-                  <Button
-                    className="mt-2"
-                    onClick={() => handleAddLlamadaClick(item.empresa)}
-                  >
+                  <Button className="mt-2" onClick={() => handleAddLlamadaClick(item.empresa)}>
                     Agregar llamada
                   </Button>
                 )}
@@ -172,6 +194,7 @@ export default function Home() {
         })}
       </div>
 
+      {/* Modal de llamada */}
       {modalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
           <div className="bg-gray-800 p-6 rounded-lg w-full max-w-md">
@@ -199,32 +222,58 @@ export default function Home() {
 
             <label className="text-sm text-white mb-1 block">Ticket (6 dígitos)</label>
             <input
-  type="number"
-  inputMode="numeric"
-  pattern="[0-9]*"
-  maxLength={6}
-  placeholder="123456"
-  value={formValues.ticket}
-  onChange={(e) => {
-    const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 6);
-    setFormValues({ ...formValues, ticket: value });
-  }}
-  className="w-1/2 mb-3 p-2 rounded bg-gray-700 text-white"
-/>
+              type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
+              placeholder="123456"
+              value={formValues.ticket}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 6);
+                setFormValues({ ...formValues, ticket: value });
+              }}
+              className="w-1/2 mb-3 p-2 rounded bg-gray-700 text-white"
+            />
             {errors.ticket && <p className="text-red-400 text-sm mb-4">{errors.ticket}</p>}
 
             <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setModalOpen(false)}
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-              >
+              <button onClick={() => setModalOpen(false)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
                 Cancelar
               </button>
-              <button
-                onClick={handleModalSubmit}
-                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-              >
+              <button onClick={handleModalSubmit} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
                 Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de login */}
+      {loginModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
+          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-sm">
+            <h2 className="text-lg font-bold mb-4">Iniciar sesión</h2>
+            <input
+              type="text"
+              placeholder="Usuario"
+              value={login.user}
+              onChange={(e) => setLogin({ ...login, user: e.target.value })}
+              className="w-full mb-3 p-2 rounded bg-gray-700 text-white"
+            />
+            <input
+              type="password"
+              placeholder="Contraseña"
+              value={login.pass}
+              onChange={(e) => setLogin({ ...login, pass: e.target.value })}
+              className="w-full mb-3 p-2 rounded bg-gray-700 text-white"
+            />
+            {loginError && <p className="text-red-400 text-sm mb-2">{loginError}</p>}
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setLoginModal(false)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                Cancelar
+              </button>
+              <button onClick={handleLogin} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                Entrar
               </button>
             </div>
           </div>
