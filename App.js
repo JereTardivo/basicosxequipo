@@ -10,6 +10,10 @@ export default function Home() {
   const [data, setData] = useState([]);
   const [equipoFilter, setEquipoFilter] = useState("");
   const [empresaFilter, setEmpresaFilter] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [formValues, setFormValues] = useState({ motivo: "", descripcion: "", ticket: "" });
+  const [errors, setErrors] = useState({});
+  const [empresaSeleccionada, setEmpresaSeleccionada] = useState(null);
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -30,23 +34,43 @@ export default function Home() {
     reader.readAsBinaryString(file);
   };
 
-  const agregarLlamada = (empresa) => {
+  const handleAddLlamadaClick = (empresa) => {
+    setEmpresaSeleccionada(empresa);
+    setFormValues({ motivo: "", descripcion: "", ticket: "" });
+    setErrors({});
+    setModalOpen(true);
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formValues.motivo || !/^[\w\s]{1,50}$/.test(formValues.motivo)) {
+      newErrors.motivo = "Motivo requerido (máx 50 caracteres alfanuméricos)";
+    }
+    if (!formValues.descripcion || !/^[\w\s]{1,250}$/.test(formValues.descripcion)) {
+      newErrors.descripcion = "Descripción requerida (máx 250 caracteres alfanuméricos)";
+    }
+    if (!/^[0-9]{6}$/.test(formValues.ticket)) {
+      newErrors.ticket = "Ticket debe ser un número de 6 cifras";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleModalSubmit = () => {
+    if (!validateForm()) return;
+
     setData((prev) =>
       prev.map((item) => {
-        if (item.empresa === empresa && item.llamadas.length < 5) {
-          const motivo = prompt("Motivo de la llamada:");
-          const descripcion = prompt("Descripción de la llamada:");
-          const ticket = prompt("Ticket de llamada:");
-          if (motivo && descripcion && ticket) {
-            return {
-              ...item,
-              llamadas: [...item.llamadas, { motivo, descripcion, ticket }],
-            };
-          }
+        if (item.empresa === empresaSeleccionada && item.llamadas.length < 5) {
+          return {
+            ...item,
+            llamadas: [...item.llamadas, { ...formValues }],
+          };
         }
         return item;
       })
     );
+    setModalOpen(false);
   };
 
   const filteredData = data.filter(
@@ -57,15 +81,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
-      {/* Título */}
       <h1 className="text-2xl font-bold text-center mb-6">
         Gestión de Llamadas a Clientes con Soporte Básico
       </h1>
 
-      {/* Filtros + Botón Excel */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
-          {/* Filtro Empresa */}
           <div className="flex items-center bg-gray-800 border border-gray-600 rounded-md px-2">
             <Building size={18} className="text-white mr-2" />
             <input
@@ -76,14 +97,12 @@ export default function Home() {
               className="bg-transparent outline-none text-white p-2 w-full"
             />
           </div>
-
-          {/* Filtro Equipo */}
           <div className="flex items-center bg-gray-800 border border-gray-600 rounded-md px-2">
             <Users size={18} className="text-white mr-2" />
             <select
               value={equipoFilter}
               onChange={(e) => setEquipoFilter(e.target.value)}
-              className="bg-transparent outline-none text-white p-2 w-full"
+              className="bg-gray-800 text-white border-none p-2 w-full appearance-none"
             >
               <option value="">Todos los equipos</option>
               <option value="Equipo 1">Equipo 1</option>
@@ -95,8 +114,6 @@ export default function Home() {
             </select>
           </div>
         </div>
-
-        {/* Botón Excel */}
         <div className="relative group">
           <input
             type="file"
@@ -118,7 +135,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Tarjetas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredData.map((item, index) => {
           const llamadasDisponibles = 5 - item.llamadas.length;
@@ -139,7 +155,7 @@ export default function Home() {
                 {llamadasDisponibles > 0 && (
                   <Button
                     className="mt-2"
-                    onClick={() => agregarLlamada(item.empresa)}
+                    onClick={() => handleAddLlamadaClick(item.empresa)}
                   >
                     Agregar llamada
                   </Button>
@@ -149,6 +165,52 @@ export default function Home() {
           );
         })}
       </div>
+
+      {modalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
+          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-lg font-bold mb-4">Agregar llamada</h2>
+            <input
+              type="text"
+              placeholder="Motivo"
+              value={formValues.motivo}
+              onChange={(e) => setFormValues({ ...formValues, motivo: e.target.value })}
+              className="w-full mb-1 p-2 rounded bg-gray-700 text-white"
+            />
+            {errors.motivo && <p className="text-red-400 text-sm mb-2">{errors.motivo}</p>}
+            <input
+              type="text"
+              placeholder="Descripción"
+              value={formValues.descripcion}
+              onChange={(e) => setFormValues({ ...formValues, descripcion: e.target.value })}
+              className="w-full mb-1 p-2 rounded bg-gray-700 text-white"
+            />
+            {errors.descripcion && <p className="text-red-400 text-sm mb-2">{errors.descripcion}</p>}
+            <input
+              type="text"
+              placeholder="Ticket (6 dígitos)"
+              value={formValues.ticket}
+              onChange={(e) => setFormValues({ ...formValues, ticket: e.target.value })}
+              className="w-full mb-3 p-2 rounded bg-gray-700 text-white"
+            />
+            {errors.ticket && <p className="text-red-400 text-sm mb-4">{errors.ticket}</p>}
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setModalOpen(false)}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleModalSubmit}
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
