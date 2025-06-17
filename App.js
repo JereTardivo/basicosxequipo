@@ -73,11 +73,17 @@ export default function Home() {
     setModalOpen(false);
   };
 
-  const filteredData = data.filter(
-    (item) =>
-      (!equipoFilter || item.equipo === equipoFilter) &&
-      (!empresaFilter || item.empresa.toLowerCase().includes(empresaFilter.toLowerCase()))
+  const filteredData = data.filter((item) => {
+  const equipoItem = (item.equipo || "").toLowerCase().trim();
+  const equipoFiltro = equipoFilter.toLowerCase().trim();
+  const empresaItem = (item.empresa || "").toLowerCase().trim();
+  const empresaFiltro = empresaFilter.toLowerCase().trim();
+
+  return (
+    (!equipoFiltro || equipoItem === equipoFiltro) &&
+    (!empresaFiltro || empresaItem.includes(empresaFiltro))
   );
+});
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
