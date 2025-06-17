@@ -18,7 +18,12 @@ import { Button } from "./components/ui/button";
 export default function App() {
   const [data, setData] = useState([]);
   const [empresaFilter, setEmpresaFilter] = useState("");
-  const [equipoFilter, setEquipoFilter] = useState("");
+  const [equipoFilter, setEquipoFilter] = useState(() => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("equipoSeleccionado") || "";
+  }
+  return "";
+});
   const [modalOpen, setModalOpen] = useState(false);
   const [formValues, setFormValues] = useState({ motivo: "", descripcion: "", ticket: "" });
   const [selectedEmpresa, setSelectedEmpresa] = useState("");
@@ -28,7 +33,13 @@ export default function App() {
   const [loginError, setLoginError] = useState("");
   const [isLogged, setIsLogged] = useState(false);
 
+  
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("equipoSeleccionado", equipoFilter);
+    }
+  }, [equipoFilter]);
+useEffect(() => {
     const fetchData = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "empresas"));
