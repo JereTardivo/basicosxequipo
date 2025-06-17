@@ -74,7 +74,7 @@ export default function App() {
 
       const newData = json.map((row) => ({
         empresa: row.EMPRESA,
-        equipo: row.EQUIPO,
+        equipo: row.EQUIPO.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase()),
         llamadas: [],
       }));
 
@@ -128,12 +128,14 @@ export default function App() {
   };
 
   const filteredData = data.filter((item) => {
-    const empresaItem = item.empresa.toLowerCase();
-    const equipoItem = item.equipo;
-    const empresaFiltro = empresaFilter.toLowerCase();
-    return (!equipoFilter || equipoItem === equipoFilter) &&
-           (!empresaFiltro || empresaItem.includes(empresaFiltro));
-  });
+  const empresaItem = (item.empresa || "").toLowerCase();
+  const equipoItem = (item.equipo || "").toLowerCase();
+  const empresaFiltro = (empresaFilter || "").toLowerCase();
+  const equipoFiltro = (equipoFilter || "").toLowerCase();
+
+  return (!equipoFiltro || equipoItem === equipoFiltro) &&
+         (!empresaFiltro || empresaItem.includes(empresaFiltro));
+});
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
