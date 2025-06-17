@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { Input } from "./components/ui/input";
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
+import { FileSpreadsheet } from "lucide-react";
 
 export default function App() {
   const [data, setData] = useState([]);
@@ -70,7 +71,27 @@ export default function App() {
       <h1 className="text-2xl font-bold mb-6 text-center">Gestión de Llamadas</h1>
 
       <div className="max-w-4xl mx-auto space-y-4">
-        <Input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} />
+        <div className="flex items-center justify-center">
+          <div className="relative group">
+            <input
+              type="file"
+              id="excelUpload"
+              accept=".xlsx, .xls"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <label
+              htmlFor="excelUpload"
+              className="cursor-pointer hover:scale-110 transition-transform"
+              title="Cargar archivo Excel"
+            >
+              <FileSpreadsheet size={48} className="text-green-400" />
+            </label>
+            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-800 text-sm text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+              Subir archivo Excel
+            </div>
+          </div>
+        </div>
 
         <div className="flex flex-col md:flex-row gap-4">
           <select
