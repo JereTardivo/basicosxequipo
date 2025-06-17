@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import * as XLSX from "xlsx";
-import { Input } from "./components/ui/input";
-import { Card, CardContent } from "./components/ui/card";
-import { Button } from "./components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
-export default function Home() {
+export default function App() {
   const [data, setData] = useState([]);
   const [equipoFilter, setEquipoFilter] = useState("");
   const [empresaFilter, setEmpresaFilter] = useState("");
@@ -38,7 +38,10 @@ export default function Home() {
           if (motivo && descripcion && ticket) {
             return {
               ...item,
-              llamadas: [...item.llamadas, { motivo, descripcion, ticket }],
+              llamadas: [
+                ...item.llamadas,
+                { motivo, descripcion, ticket },
+              ],
             };
           }
         }
@@ -50,38 +53,63 @@ export default function Home() {
   const filteredData = data.filter(
     (item) =>
       (!equipoFilter || item.equipo === equipoFilter) &&
-      (!empresaFilter || item.empresa.includes(empresaFilter))
+      (!empresaFilter || item.empresa.toLowerCase().includes(empresaFilter.toLowerCase()))
   );
 
-  return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Gestión de Llamadas</h1>
-      <Input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} />
+  const equipos = [
+    "Equipo 1",
+    "Equipo 2",
+    "Equipo 3",
+    "Equipo 4",
+    "Equipo 5",
+    "Equipo Corralon",
+  ];
 
-      <div className="flex gap-2 my-4">
-        <Input
-          placeholder="Filtrar por equipo"
-          value={equipoFilter}
-          onChange={(e) => setEquipoFilter(e.target.value)}
-        />
-        <Input
-          placeholder="Filtrar por empresa"
-          value={empresaFilter}
-          onChange={(e) => setEmpresaFilter(e.target.value)}
-        />
+  return (
+    <div className="min-h-screen bg-gray-900 text-white p-4">
+      <h1 className="text-2xl font-bold mb-6 text-center">Gestión de Llamadas</h1>
+
+      <div className="max-w-4xl mx-auto space-y-4">
+        <Input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} />
+
+        <div className="flex flex-col md:flex-row gap-4">
+          <select
+            value={equipoFilter}
+            onChange={(e) => setEquipoFilter(e.target.value)}
+            className="bg-gray-800 border border-gray-600 rounded-md p-2 w-full md:w-1/2 text-white"
+          >
+            <option value="">Todos los equipos</option>
+            {equipos.map((equipo, i) => (
+              <option key={i} value={equipo}>
+                {equipo}
+              </option>
+            ))}
+          </select>
+
+          <Input
+            placeholder="Filtrar por empresa"
+            value={empresaFilter}
+            onChange={(e) => setEmpresaFilter(e.target.value)}
+            className="bg-gray-800 border border-gray-600 text-white"
+          />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredData.map((item, index) => {
           const llamadasDisponibles = 5 - item.llamadas.length;
           const bgColor =
-            llamadasDisponibles === 0 ? "bg-red-200" : "bg-green-200";
+            llamadasDisponibles === 0 ? "bg-red-400/20" : "bg-green-400/20";
+
           return (
-            <Card key={index} className={bgColor}>
-              <CardContent className="p-4">
-                <h2 className="text-lg font-semibold">{item.empresa}</h2>
-                <p>Llamadas disponibles: {llamadasDisponibles}</p>
-                <ul className="list-disc pl-4">
+            <Card
+              key={index}
+              className={`rounded-2xl shadow-md ${bgColor} text-white`}
+            >
+              <CardContent className="p-5">
+                <h2 className="text-xl font-semibold mb-2">{item.empresa}</h2>
+                <p className="mb-2">Llamadas disponibles: {llamadasDisponibles}</p>
+                <ul className="list-disc pl-5 space-y-1 text-sm">
                   {item.llamadas.map((llamada, i) => (
                     <li key={i}>
                       <strong>{llamada.motivo}</strong>: {llamada.descripcion} (Ticket: {llamada.ticket})
@@ -90,7 +118,7 @@ export default function Home() {
                 </ul>
                 {llamadasDisponibles > 0 && (
                   <Button
-                    className="mt-2"
+                    className="mt-4 bg-blue-600 hover:bg-blue-700 transition"
                     onClick={() => agregarLlamada(item.empresa)}
                   >
                     Agregar llamada
