@@ -170,6 +170,8 @@ export default function Home() {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
           <div className="bg-gray-800 p-6 rounded-lg w-full max-w-md">
             <h2 className="text-lg font-bold mb-4">Agregar llamada</h2>
+
+            <label className="text-sm text-white mb-1 block">Motivo</label>
             <input
               type="text"
               placeholder="Motivo"
@@ -178,22 +180,27 @@ export default function Home() {
               className="w-full mb-1 p-2 rounded bg-gray-700 text-white"
             />
             {errors.motivo && <p className="text-red-400 text-sm mb-2">{errors.motivo}</p>}
-            <input
-              type="text"
+
+            <label className="text-sm text-white mb-1 block">Descripción</label>
+            <textarea
+              rows="3"
               placeholder="Descripción"
               value={formValues.descripcion}
               onChange={(e) => setFormValues({ ...formValues, descripcion: e.target.value })}
-              className="w-full mb-1 p-2 rounded bg-gray-700 text-white"
+              className="w-full mb-1 p-2 rounded bg-gray-700 text-white resize-none"
             />
             {errors.descripcion && <p className="text-red-400 text-sm mb-2">{errors.descripcion}</p>}
+
+            <label className="text-sm text-white mb-1 block">Ticket (6 dígitos)</label>
             <input
               type="text"
-              placeholder="Ticket (6 dígitos)"
+              placeholder="123456"
               value={formValues.ticket}
               onChange={(e) => setFormValues({ ...formValues, ticket: e.target.value })}
-              className="w-full mb-3 p-2 rounded bg-gray-700 text-white"
+              className="w-1/2 mb-3 p-2 rounded bg-gray-700 text-white"
             />
             {errors.ticket && <p className="text-red-400 text-sm mb-4">{errors.ticket}</p>}
+
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setModalOpen(false)}
