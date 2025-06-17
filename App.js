@@ -193,12 +193,18 @@ export default function Home() {
 
             <label className="text-sm text-white mb-1 block">Ticket (6 dígitos)</label>
             <input
-              type="text"
-              placeholder="123456"
-              value={formValues.ticket}
-              onChange={(e) => setFormValues({ ...formValues, ticket: e.target.value })}
-              className="w-1/2 mb-3 p-2 rounded bg-gray-700 text-white"
-            />
+  type="number"
+  inputMode="numeric"
+  pattern="[0-9]*"
+  maxLength={6}
+  placeholder="123456"
+  value={formValues.ticket}
+  onChange={(e) => {
+    const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 6);
+    setFormValues({ ...formValues, ticket: value });
+  }}
+  className="w-1/2 mb-3 p-2 rounded bg-gray-700 text-white"
+/>
             {errors.ticket && <p className="text-red-400 text-sm mb-4">{errors.ticket}</p>}
 
             <div className="flex justify-end gap-2">
