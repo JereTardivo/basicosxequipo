@@ -1,11 +1,12 @@
+
 import React, { useState } from "react";
 import * as XLSX from "xlsx";
 import { Input } from "./components/ui/input";
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
-import { FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, Building, Users } from "lucide-react";
 
-export default function App() {
+export default function Home() {
   const [data, setData] = useState([]);
   const [equipoFilter, setEquipoFilter] = useState("");
   const [empresaFilter, setEmpresaFilter] = useState("");
@@ -39,10 +40,7 @@ export default function App() {
           if (motivo && descripcion && ticket) {
             return {
               ...item,
-              llamadas: [
-                ...item.llamadas,
-                { motivo, descripcion, ticket },
-              ],
+              llamadas: [...item.llamadas, { motivo, descripcion, ticket }],
             };
           }
         }
@@ -57,80 +55,81 @@ export default function App() {
       (!empresaFilter || item.empresa.toLowerCase().includes(empresaFilter.toLowerCase()))
   );
 
-  const equipos = [
-    "Equipo 1",
-    "Equipo 2",
-    "Equipo 3",
-    "Equipo 4",
-    "Equipo 5",
-    "Equipo Corralon",
-  ];
-
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
-      <h1 className="text-2xl font-bold mb-6 text-center">Gestión de Llamadas</h1>
+      {/* Título */}
+      <h1 className="text-2xl font-bold text-center mb-6">
+        Gestión de Llamadas a Clientes con Soporte Básico
+      </h1>
 
-      <div className="max-w-4xl mx-auto space-y-4">
-        <div className="flex items-center justify-center">
-          <div className="relative group">
+      {/* Filtros + Botón Excel */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+          {/* Filtro Empresa */}
+          <div className="flex items-center bg-gray-800 border border-gray-600 rounded-md px-2">
+            <Building size={18} className="text-white mr-2" />
             <input
-              type="file"
-              id="excelUpload"
-              accept=".xlsx, .xls"
-              onChange={handleFileUpload}
-              className="hidden"
+              type="text"
+              placeholder="Filtrar por empresa"
+              value={empresaFilter}
+              onChange={(e) => setEmpresaFilter(e.target.value)}
+              className="bg-transparent outline-none text-white p-2 w-full"
             />
-            <label
-              htmlFor="excelUpload"
-              className="cursor-pointer hover:scale-110 transition-transform"
-              title="Cargar archivo Excel"
+          </div>
+
+          {/* Filtro Equipo */}
+          <div className="flex items-center bg-gray-800 border border-gray-600 rounded-md px-2">
+            <Users size={18} className="text-white mr-2" />
+            <select
+              value={equipoFilter}
+              onChange={(e) => setEquipoFilter(e.target.value)}
+              className="bg-transparent outline-none text-white p-2 w-full"
             >
-              <FileSpreadsheet size={48} className="text-green-400" />
-            </label>
-            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-800 text-sm text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-              Subir archivo Excel
-            </div>
+              <option value="">Todos los equipos</option>
+              <option value="Equipo 1">Equipo 1</option>
+              <option value="Equipo 2">Equipo 2</option>
+              <option value="Equipo 3">Equipo 3</option>
+              <option value="Equipo 4">Equipo 4</option>
+              <option value="Equipo 5">Equipo 5</option>
+              <option value="Equipo Corralon">Equipo Corralon</option>
+            </select>
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4">
-          <select
-            value={equipoFilter}
-            onChange={(e) => setEquipoFilter(e.target.value)}
-            className="bg-gray-800 border border-gray-600 rounded-md p-2 w-full md:w-1/2 text-white"
-          >
-            <option value="">Todos los equipos</option>
-            {equipos.map((equipo, i) => (
-              <option key={i} value={equipo}>
-                {equipo}
-              </option>
-            ))}
-          </select>
-
-          <Input
-            placeholder="Filtrar por empresa"
-            value={empresaFilter}
-            onChange={(e) => setEmpresaFilter(e.target.value)}
-            className="bg-gray-800 border border-gray-600 text-white"
+        {/* Botón Excel */}
+        <div className="relative group">
+          <input
+            type="file"
+            id="excelUpload"
+            accept=".xlsx, .xls"
+            onChange={handleFileUpload}
+            className="hidden"
           />
+          <label
+            htmlFor="excelUpload"
+            className="cursor-pointer hover:scale-110 transition-transform"
+            title="Subir archivo Excel"
+          >
+            <FileSpreadsheet size={36} className="text-green-400" />
+          </label>
+          <div className="absolute bottom-full mb-2 right-0 bg-gray-800 text-sm text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+            Subir archivo Excel
+          </div>
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Tarjetas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredData.map((item, index) => {
           const llamadasDisponibles = 5 - item.llamadas.length;
           const bgColor =
             llamadasDisponibles === 0 ? "bg-red-400/20" : "bg-green-400/20";
-
           return (
-            <Card
-              key={index}
-              className={`rounded-2xl shadow-md ${bgColor} text-white`}
-            >
-              <CardContent className="p-5">
-                <h2 className="text-xl font-semibold mb-2">{item.empresa}</h2>
-                <p className="mb-2">Llamadas disponibles: {llamadasDisponibles}</p>
-                <ul className="list-disc pl-5 space-y-1 text-sm">
+            <Card key={index} className={bgColor}>
+              <CardContent className="p-4">
+                <h2 className="text-lg font-semibold">{item.empresa}</h2>
+                <p>Llamadas disponibles: {llamadasDisponibles}</p>
+                <ul className="list-disc pl-4">
                   {item.llamadas.map((llamada, i) => (
                     <li key={i}>
                       <strong>{llamada.motivo}</strong>: {llamada.descripcion} (Ticket: {llamada.ticket})
@@ -139,7 +138,7 @@ export default function App() {
                 </ul>
                 {llamadasDisponibles > 0 && (
                   <Button
-                    className="mt-4 bg-blue-600 hover:bg-blue-700 transition"
+                    className="mt-2"
                     onClick={() => agregarLlamada(item.empresa)}
                   >
                     Agregar llamada
