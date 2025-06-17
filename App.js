@@ -32,13 +32,43 @@ export default function App() {
   const [login, setLogin] = useState({ user: "", pass: "" });
   const [loginError, setLoginError] = useState("");
   const [isLogged, setIsLogged] = useState(false);
+const [nombreUsuario, setNombreUsuario] = useState("");
+
+  const [modalAddOpen, setModalAddOpen] = useState(false);
+  const [modalEditOpen, setModalEditOpen] = useState(false);
+  const [modalDeleteOpen, setModalDeleteOpen] = useState(false);
+  const [empresaSeleccionada, setEmpresaSeleccionada] = useState("");
+  const [nuevoNombreEmpresa, setNuevoNombreEmpresa] = useState("");
+
+
+const credencialesEquipos = {
+  "equipo1": { pass: "eq1bx2025", equipo: "Equipo 1" },
+  "equipo2": { pass: "eq2bx2025", equipo: "Equipo 2" },
+  "equipo3": { pass: "eq3bx2025", equipo: "Equipo 3" },
+  "equipo4": { pass: "eq4bx2025", equipo: "Equipo 4" },
+  "equipo5": { pass: "eq5bx2025", equipo: "Equipo 5" },
+  "equipo-corralon": { pass: "corralon25", equipo: "Equipo Corralon" },
+};
+
 
   
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("equipoSeleccionado", equipoFilter);
+      const equipoGuardado = localStorage.getItem("equipoSeleccionado");
+      const logueado = localStorage.getItem("isLogged") === "true";
+      if (equipoGuardado) setEquipoFilter(equipoGuardado);
+      if (logueado) setIsLogged(true);
+const nombreGuardado = localStorage.getItem("nombreUsuario");
+      if (nombreGuardado) setNombreUsuario(nombreGuardado);
     }
-  }, [equipoFilter]);
+  }, []);
+useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("equipoSeleccionado", equipoFilter);
+      localStorage.setItem("isLogged", isLogged);
+      localStorage.setItem("nombreUsuario", nombreUsuario);
+    }
+  }, [equipoFilter, isLogged]);
 useEffect(() => {
     const fetchData = async () => {
       try {
@@ -51,18 +81,45 @@ useEffect(() => {
     };
     fetchData();
   }, []);
+useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("equipoSeleccionado", equipoFilter);
+      localStorage.setItem("isLogged", isLogged);
+      localStorage.setItem("nombreUsuario", nombreUsuario);
+    }
+  }, [equipoFilter, isLogged]);
 
   const handleLogout = () => {
     setIsLogged(false);
+    setEquipoFilter("");
+    setNombreUsuario("");
+    localStorage.removeItem("isLogged");
+    localStorage.removeItem("equipoSeleccionado");
   };
 
   const handleLogin = () => {
-    if (login.user.toLowerCase() === "flexxus" && login.pass === "1926") {
+    const usuarioIngresado = login.user.trim().toLowerCase();
+    const claveIngresada = login.pass.trim();
+
+    if (usuarioIngresado === "flexxus" && claveIngresada === "1926") {
       setIsLogged(true);
       setLoginModal(false);
       setLoginError("");
+      setEquipoFilter("");
+    setNombreUsuario("");
+      setNombreUsuario("Flexxus");
+    } else if (
+      credencialesEquipos[usuarioIngresado] &&
+      credencialesEquipos[usuarioIngresado].pass === claveIngresada
+    ) {
+      setIsLogged(true);
+      setLoginModal(false);
+      setLoginError("");
+      const equipoNombre = credencialesEquipos[usuarioIngresado].equipo;
+      setEquipoFilter(equipoNombre);
+      setNombreUsuario(equipoNombre);
     } else {
-      setLoginError("Credenciales incorrectas");
+      setLoginError("Usuario o contraseña incorrectos");
     }
   };
 
@@ -148,12 +205,70 @@ useEffect(() => {
          (!empresaFiltro || empresaItem.includes(empresaFiltro));
 });
 
-  return (
+  
+  const handleAddEmpresa = () => {
+    setNuevoNombreEmpresa("");
+    setModalAddOpen(true);
+  };
+
+  const confirmAddEmpresa = async () => {
+    const nombre = nuevoNombreEmpresa.trim();
+    if (!nombre) return;
+    const docId = `${nombre}_${equipoFilter || "admin"}`;
+    const nueva = {
+      empresa: nombre,
+      equipo: equipoFilter,
+      llamadas: [],
+    };
+    await setDoc(doc(db, "empresas", docId), nueva);
+    setData([...data, nueva]);
+    setModalAddOpen(false);
+  };
+
+  const handleEditEmpresa = (empresa) => {
+    setEmpresaSeleccionada(empresa);
+    setNuevoNombreEmpresa(empresa);
+    setModalEditOpen(true);
+  };
+
+  const confirmEditEmpresa = async () => {
+    const nuevoNombre = nuevoNombreEmpresa.trim();
+    if (!nuevoNombre || !empresaSeleccionada) return;
+    const empresaOriginal = data.find(e => e.empresa === empresaSeleccionada && e.equipo === equipoFilter);
+    if (!empresaOriginal) return;
+
+    const nuevo = { ...empresaOriginal, empresa: nuevoNombre };
+    const oldDocId = `${empresaOriginal.empresa}_${empresaOriginal.equipo}`;
+    const newDocId = `${nuevoNombre}_${empresaOriginal.equipo}`;
+
+    await deleteDoc(doc(db, "empresas", oldDocId));
+    await setDoc(doc(db, "empresas", newDocId), nuevo);
+    setData(data.map(e => e.empresa === empresaSeleccionada ? nuevo : e));
+    setModalEditOpen(false);
+  };
+
+  const handleDeleteEmpresa = (empresa) => {
+    setEmpresaSeleccionada(empresa);
+    setModalDeleteOpen(true);
+  };
+
+  const confirmDeleteEmpresa = async () => {
+    const empresaObj = data.find(e => e.empresa === empresaSeleccionada && e.equipo === equipoFilter);
+    if (!empresaObj) return;
+
+    const docId = `${empresaSeleccionada}_${empresaObj.equipo}`;
+    await deleteDoc(doc(db, "empresas", docId));
+    setData(data.filter(e => e.empresa !== empresaSeleccionada));
+    setModalDeleteOpen(false);
+  };
+
+
+return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-center w-full">Gestión de Llamadas a Clientes con Soporte Básico</h1>
-        <div className="absolute top-4 right-4 flex gap-3">
-          {isLogged ? (
+        <div className="absolute top-4 right-4 flex gap-3 items-center">
+          {nombreUsuario && <span className="text-white font-semibold mr-2">{nombreUsuario}</span>} {isLogged ? (
             <LogOut className="text-red-400 cursor-pointer hover:text-red-600" size={28} onClick={handleLogout} />
           ) : (
             <LogIn className="text-green-400 cursor-pointer hover:text-green-600" size={28} onClick={() => setLoginModal(true)} />
@@ -182,7 +297,8 @@ useEffect(() => {
               <option value="Equipo Corralon">Equipo Corralon</option>
             </select>
           </div>
-        </div>
+        <Button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" onClick={handleAddEmpresa}>+ Nueva Empresa</Button>
+</div>
         {isLogged && (
           <div className="relative group">
             <input type="file" id="excelUpload" accept=".xlsx, .xls" onChange={handleFileUpload} className="hidden" />
@@ -210,10 +326,24 @@ useEffect(() => {
                   ))}
                 </ul>
                 {llamadasDisponibles > 0 && (
-                  <Button className="mt-2" onClick={() => handleAddLlamadaClick(item.empresa)}>
-                    Agregar llamada
-                  </Button>
-                )}
+  <Button className="mt-2" onClick={() => handleAddLlamadaClick(item.empresa)}>
+    Agregar llamada
+  </Button>
+)}
+{isLogged && (item.equipo === equipoFilter || equipoFilter === "") && (
+  <div className="flex gap-2 mt-2">
+    <Button variant="outline" onClick={() => handleEditEmpresa(item.empresa)}>
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M17.414 2.586a2 2 0 010 2.828l-9.192 9.192a1 1 0 01-.39.242l-4 1a1 1 0 01-1.213-1.213l1-4a1 1 0 01.242-.39l9.192-9.192a2 2 0 012.828 0zM15 4l1 1-9.192 9.192-1-1L15 4z" />
+      </svg>
+    </Button>
+    <Button variant="outline" onClick={() => handleDeleteEmpresa(item.empresa)}>
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H3.5A1.5 1.5 0 002 5.5v.5h16v-.5A1.5 1.5 0 0016.5 4H15V3a1 1 0 00-1-1H6zm2 5a1 1 0 00-1 1v7a1 1 0 102 0V8a1 1 0 00-1-1zm4 0a1 1 0 00-1 1v7a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+      </svg>
+    </Button>
+  </div>
+)}
               </CardContent>
             </Card>
           );
@@ -280,6 +410,60 @@ useEffect(() => {
           </div>
         </div>
       )}
-    </div>
+    
+      {/* MODAL NUEVA EMPRESA */}
+      {modalAddOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
+          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Agregar nueva empresa</h2>
+            <input
+              type="text"
+              value={nuevoNombreEmpresa}
+              onChange={(e) => setNuevoNombreEmpresa(e.target.value)}
+              placeholder="Nombre de la empresa"
+              className="w-full p-2 rounded bg-gray-700 text-white mb-4"
+            />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setModalAddOpen(false)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Cancelar</button>
+              <button onClick={confirmAddEmpresa} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Agregar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL EDITAR EMPRESA */}
+      {modalEditOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
+          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Editar nombre de empresa</h2>
+            <input
+              type="text"
+              value={nuevoNombreEmpresa}
+              onChange={(e) => setNuevoNombreEmpresa(e.target.value)}
+              className="w-full p-2 rounded bg-gray-700 text-white mb-4"
+            />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setModalEditOpen(false)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Cancelar</button>
+              <button onClick={confirmEditEmpresa} className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Guardar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL ELIMINAR EMPRESA */}
+      {modalDeleteOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
+          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4 text-red-400">Eliminar empresa</h2>
+            <p className="text-white mb-6">¿Estás seguro de que querés eliminar "{empresaSeleccionada}"?</p>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setModalDeleteOpen(false)} className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancelar</button>
+              <button onClick={confirmDeleteEmpresa} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+</div>
   );
 }
