@@ -326,23 +326,43 @@ return (
                   ))}
                 </ul>
                 {llamadasDisponibles > 0 && (
-  <Button className="mt-2" onClick={() => handleAddLlamadaClick(item.empresa)}>
-    Agregar llamada
-  </Button>
+  <Button
+  className="mt-2 flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+  onClick={() => handleAddLlamadaClick(item.empresa)}
+>
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5l7 7m0 0l-7 7m7-7H3" />
+  </svg>
+  Llamada
+</Button>
 )}
 {isLogged && (item.equipo === equipoFilter || equipoFilter === "") && (
-  <div className="flex gap-2 mt-2">
-    <Button variant="outline" onClick={() => handleEditEmpresa(item.empresa)}>
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M17.414 2.586a2 2 0 010 2.828l-9.192 9.192a1 1 0 01-.39.242l-4 1a1 1 0 01-1.213-1.213l1-4a1 1 0 01.242-.39l9.192-9.192a2 2 0 012.828 0zM15 4l1 1-9.192 9.192-1-1L15 4z" />
-      </svg>
-    </Button>
-    <Button variant="outline" onClick={() => handleDeleteEmpresa(item.empresa)}>
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H3.5A1.5 1.5 0 002 5.5v.5h16v-.5A1.5 1.5 0 0016.5 4H15V3a1 1 0 00-1-1H6zm2 5a1 1 0 00-1 1v7a1 1 0 102 0V8a1 1 0 00-1-1zm4 0a1 1 0 00-1 1v7a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-      </svg>
-    </Button>
-  </div>
+  <>
+    <div className="absolute top-2 right-4 text-sm text-red-400 font-semibold flex gap-2">
+      <span
+        className="cursor-pointer hover:underline"
+        onClick={() => handleEditEmpresa(item.empresa)}
+      >
+        <img src="/icons/edit.png" alt="Editar" className="h-5 w-5 transition-transform duration-200 hover:scale-110" />
+      </span>
+      <span
+        className="cursor-pointer hover:underline"
+        onClick={() => handleDeleteEmpresa(item.empresa)}
+      >
+        <img src="/icons/delete.png" alt="Eliminar" className="h-5 w-5 transition-transform duration-200 hover:scale-110" />
+      </span>
+    </div>
+
+    <div className="absolute bottom-2 right-4 text-red-400 text-xs text-right">
+      <span
+        className="cursor-pointer hover:underline flex items-center gap-1"
+        onClick={() => handleAddLlamadaClick(item.empresa)}
+      >
+        <img src="/icons/phone.png" alt="Agregar llamada" className="h-5 w-5 transition-transform duration-200 hover:scale-110" />
+        <span>AGREGAR LLAMADA</span>
+      </span>
+    </div>
+  </>
 )}
               </CardContent>
             </Card>
