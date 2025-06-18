@@ -356,45 +356,8 @@ return (
                     </li>
                   ))}
                 </ul>
-                {llamadasDisponibles > 0 && (
-  <Button
-  className="mt-2 flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
-  onClick={() => handleAddLlamadaClick(item.empresa)}
->
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5l7 7m0 0l-7 7m7-7H3" />
-  </svg>
-  Llamada
-</Button>
-)}
-{isLogged && (item.equipo === equipoFilter || equipoFilter === "") && (
-  <>
-    <div className="absolute top-2 right-4 text-sm text-red-400 font-semibold flex gap-2">
-      <span
-        className="cursor-pointer hover:underline"
-        onClick={() => handleEditEmpresa(item.empresa)}
-      >
-        <img src="/icons/edit.png" alt="Editar" className="h-5 w-5 transition-transform duration-200 hover:scale-110" />
-      </span>
-      <span
-        className="cursor-pointer hover:underline"
-        onClick={() => handleDeleteEmpresa(item.empresa)}
-      >
-        <img src="/icons/delete.png" alt="Eliminar" className="h-5 w-5 transition-transform duration-200 hover:scale-110" />
-      </span>
-    </div>
+                
 
-    <div className="absolute bottom-2 right-4 text-red-400 text-xs text-right">
-      <span
-        className="cursor-pointer hover:underline flex items-center gap-1"
-        onClick={() => handleAddLlamadaClick(item.empresa)}
-      >
-        <img src="/icons/phone.png" alt="Agregar llamada" className="h-5 w-5 transition-transform duration-200 hover:scale-110" />
-        <span>AGREGAR LLAMADA</span>
-      </span>
-    </div>
-  </>
-)}
               </CardContent>
             </Card>
           );
