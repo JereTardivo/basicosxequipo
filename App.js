@@ -38,7 +38,8 @@ const [nombreUsuario, setNombreUsuario] = useState("");
   const [modalEditOpen, setModalEditOpen] = useState(false);
   const [modalDeleteOpen, setModalDeleteOpen] = useState(false);
   const [empresaSeleccionada, setEmpresaSeleccionada] = useState("");
-  const [nuevoNombreEmpresa, setNuevoNombreEmpresa] = useState("");
+  const [nuevoNombreEmpresa, setNuevoNombreEmpresa],
+    [nuevoEquipoEmpresa, setNuevoEquipoEmpresa] = useState("");
 
 
 const credencialesEquipos = {
@@ -341,7 +342,7 @@ return (
                 </ul>
 
 {isLogged && (nombreUsuario === "Flexxus" || item.equipo === equipoFilter) && (
-  <div className="flex gap-4 mt-4 justify-end">
+  <div className="absolute bottom-2 right-3 flex gap-4">
     <span
       className="cursor-pointer"
       title="EDITAR EMPRESA"
