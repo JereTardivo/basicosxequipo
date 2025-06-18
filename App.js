@@ -88,7 +88,6 @@ export default function App() {
       localStorage.setItem("nombreUsuario", nombreUsuario);
     }
   }, [equipoFilter, isLogged]);
-  // Acá iría el resto del return y componentes JSX...
 
   const handleLogout = () => {
     setIsLogged(false);
@@ -209,6 +208,7 @@ export default function App() {
 
   const handleAddEmpresa = () => {
     setNuevoNombreEmpresa("");
+    setNuevoEquipoEmpresa(nombreUsuario); // ← ya deja el equipo cargado
     setModalAddOpen(true);
   };
 
@@ -320,11 +320,14 @@ export default function App() {
               <option value="Equipo Corralon">Equipo Corralon</option>
             </select>
           </div>
-          <Button
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            onClick={handleAddEmpresa}>
-            + Nueva Empresa
-          </Button>
+          {isLogged && (
+            <Button
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              onClick={handleAddEmpresa}
+            >
+              + Nueva Empresa
+            </Button>
+          )}
         </div>
         {isLogged && (
           <div className="relative group">
