@@ -318,23 +318,40 @@ return (
             
 <Card key={index} className={bgColor}>
   <div style={{ position: "relative" }}>
-    <button
-      onClick={() => {
-        setModalDeleteOpen(true);
-        setEmpresaSeleccionada(empresa.nombre);
-      }}
-      style={{
-        position: "absolute",
-        top: "8px",
-        right: "8px",
-        background: "transparent",
-        border: "none",
-        cursor: "pointer",
-        padding: 0
-      }}
-    >
-      <img src="/icons/delete.png" alt="Eliminar" style={{ width: "24px", height: "24px" }} />
-    </button>
+    {isLogged && (
+      <div style={{ position: "absolute", top: "8px", right: "8px", display: "flex", gap: "8px" }}>
+        <button
+          onClick={() => {
+            setModalEditOpen(true);
+            setEmpresaSeleccionada(empresa.nombre);
+            setNuevoNombreEmpresa(empresa.nombre);
+            setNuevoEquipoEmpresa(empresa.equipo);
+          }}
+          style={{
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            padding: 0
+          }}
+        >
+          <img src="/icons/edit.png" alt="Editar" style={{ width: "24px", height: "24px" }} />
+        </button>
+        <button
+          onClick={() => {
+            setModalDeleteOpen(true);
+            setEmpresaSeleccionada(empresa.nombre);
+          }}
+          style={{
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            padding: 0
+          }}
+        >
+          <img src="/icons/delete.png" alt="Eliminar" style={{ width: "24px", height: "24px" }} />
+        </button>
+      </div>
+    )}
     
               <CardContent className="p-4 relative">
 
