@@ -315,7 +315,38 @@ return (
           const bgColor = llamadasDisponibles === 0 ? "bg-red-400/20" : "bg-green-400/20";
           return (
             <Card key={index} className={bgColor}>
-              <CardContent className="p-4">
+              <CardContent className="p-4 relative">
+{isLogged && (item.equipo === equipoFilter || equipoFilter === "") && (
+  <div className="absolute top-2 right-3 flex gap-2">
+    <span
+      className="cursor-pointer"
+      title="EDITAR EMPRESA"
+      onClick={() => handleEditEmpresa(item.empresa)}
+    >
+      <img src="/icons/edit.png" alt="Editar" className="h-8 w-8 transition-transform duration-200 hover:scale-110" />
+    </span>
+    <span
+      className="cursor-pointer"
+      title="ELIMINAR EMPRESA"
+      onClick={() => handleDeleteEmpresa(item.empresa)}
+    >
+      <img src="/icons/delete.png" alt="Eliminar" className="h-8 w-8 transition-transform duration-200 hover:scale-110" />
+    </span>
+  </div>
+)}
+
+{isLogged && (item.equipo === equipoFilter || equipoFilter === "") && (
+  <div className="absolute bottom-2 right-3">
+    <span
+      className="cursor-pointer"
+      title="AGREGAR LLAMADA"
+      onClick={() => handleAddLlamadaClick(item.empresa)}
+    >
+      <img src="/icons/phone.png" alt="Agregar llamada" className="h-8 w-8 transition-transform duration-200 hover:scale-110" />
+    </span>
+  </div>
+)}
+
                 <h2 className="text-lg font-semibold">{item.empresa}</h2>
                 <p>Llamadas disponibles: {llamadasDisponibles}</p>
                 <ul className="list-disc pl-4">
@@ -343,13 +374,13 @@ return (
         className="cursor-pointer hover:underline"
         onClick={() => handleEditEmpresa(item.empresa)}
       >
-        <img src="/icons/edit.png" alt="Editar" className="h-5 w-5 transition-transform duration-200 hover:scale-110" />
+        <img src="/icons/edit.png" alt="Editar" className="h-8 w-8 transition-transform duration-200 hover:scale-110" />
       </span>
       <span
         className="cursor-pointer hover:underline"
         onClick={() => handleDeleteEmpresa(item.empresa)}
       >
-        <img src="/icons/delete.png" alt="Eliminar" className="h-5 w-5 transition-transform duration-200 hover:scale-110" />
+        <img src="/icons/delete.png" alt="Eliminar" className="h-8 w-8 transition-transform duration-200 hover:scale-110" />
       </span>
     </div>
 
@@ -358,7 +389,7 @@ return (
         className="cursor-pointer hover:underline flex items-center gap-1"
         onClick={() => handleAddLlamadaClick(item.empresa)}
       >
-        <img src="/icons/phone.png" alt="Agregar llamada" className="h-5 w-5 transition-transform duration-200 hover:scale-110" />
+        <img src="/icons/phone.png" alt="Agregar llamada" className="h-8 w-8 transition-transform duration-200 hover:scale-110" />
         <span>AGREGAR LLAMADA</span>
       </span>
     </div>
