@@ -10,20 +10,19 @@ import {
   doc,
   deleteDoc,
 } from "firebase/firestore";
-import { FileSpreadsheet, LogIn, LogOut, Building, Users } from "lucide-react";
+import { Pencil, Trash2, PhoneCall, FileSpreadsheet, LogIn, LogOut, Building, Users } from "lucide-react";
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 
-// COMPONENT
 export default function App() {
   const [data, setData] = useState([]);
   const [empresaFilter, setEmpresaFilter] = useState("");
   const [equipoFilter, setEquipoFilter] = useState(() => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("equipoSeleccionado") || "";
-  }
-  return "";
-});
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("equipoSeleccionado") || "";
+    }
+    return "";
+  });
   const [modalOpen, setModalOpen] = useState(false);
   const [formValues, setFormValues] = useState({ motivo: "", descripcion: "", ticket: "" });
   const [selectedEmpresa, setSelectedEmpresa] = useState("");
@@ -32,45 +31,44 @@ export default function App() {
   const [login, setLogin] = useState({ user: "", pass: "" });
   const [loginError, setLoginError] = useState("");
   const [isLogged, setIsLogged] = useState(false);
-const [nombreUsuario, setNombreUsuario] = useState("");
+  const [nombreUsuario, setNombreUsuario] = useState("");
 
   const [modalAddOpen, setModalAddOpen] = useState(false);
   const [modalEditOpen, setModalEditOpen] = useState(false);
   const [modalDeleteOpen, setModalDeleteOpen] = useState(false);
   const [empresaSeleccionada, setEmpresaSeleccionada] = useState("");
   const [nuevoNombreEmpresa, setNuevoNombreEmpresa] = useState("");
-const [nuevoEquipoEmpresa, setNuevoEquipoEmpresa] = useState("");
+  const [nuevoEquipoEmpresa, setNuevoEquipoEmpresa] = useState("");
 
+  const credencialesEquipos = {
+    "equipo1": { pass: "eq1bx2025", equipo: "Equipo 1" },
+    "equipo2": { pass: "eq2bx2025", equipo: "Equipo 2" },
+    "equipo3": { pass: "eq3bx2025", equipo: "Equipo 3" },
+    "equipo4": { pass: "eq4bx2025", equipo: "Equipo 4" },
+    "equipo5": { pass: "eq5bx2025", equipo: "Equipo 5" },
+    "equipo-corralon": { pass: "corralon25", equipo: "Equipo Corralon" },
+  };
 
-const credencialesEquipos = {
-  "equipo1": { pass: "eq1bx2025", equipo: "Equipo 1" },
-  "equipo2": { pass: "eq2bx2025", equipo: "Equipo 2" },
-  "equipo3": { pass: "eq3bx2025", equipo: "Equipo 3" },
-  "equipo4": { pass: "eq4bx2025", equipo: "Equipo 4" },
-  "equipo5": { pass: "eq5bx2025", equipo: "Equipo 5" },
-  "equipo-corralon": { pass: "corralon25", equipo: "Equipo Corralon" },
-};
-
-
-  
   useEffect(() => {
     if (typeof window !== "undefined") {
       const equipoGuardado = localStorage.getItem("equipoSeleccionado");
       const logueado = localStorage.getItem("isLogged") === "true";
       if (equipoGuardado) setEquipoFilter(equipoGuardado);
       if (logueado) setIsLogged(true);
-const nombreGuardado = localStorage.getItem("nombreUsuario");
+      const nombreGuardado = localStorage.getItem("nombreUsuario");
       if (nombreGuardado) setNombreUsuario(nombreGuardado);
     }
   }, []);
-useEffect(() => {
+
+  useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem("equipoSeleccionado", equipoFilter);
       localStorage.setItem("isLogged", isLogged);
       localStorage.setItem("nombreUsuario", nombreUsuario);
     }
   }, [equipoFilter, isLogged]);
-useEffect(() => {
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "empresas"));
@@ -82,13 +80,15 @@ useEffect(() => {
     };
     fetchData();
   }, []);
-useEffect(() => {
+
+  useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem("equipoSeleccionado", equipoFilter);
       localStorage.setItem("isLogged", isLogged);
       localStorage.setItem("nombreUsuario", nombreUsuario);
     }
   }, [equipoFilter, isLogged]);
+  // Acá iría el resto del return y componentes JSX...
 
   const handleLogout = () => {
     setIsLogged(false);
@@ -107,7 +107,7 @@ useEffect(() => {
       setLoginModal(false);
       setLoginError("");
       setEquipoFilter("");
-    setNombreUsuario("");
+      setNombreUsuario("");
       setNombreUsuario("Flexxus");
     } else if (
       credencialesEquipos[usuarioIngresado] &&
@@ -197,16 +197,16 @@ useEffect(() => {
   };
 
   const filteredData = data.filter((item) => {
-  const empresaItem = (item.empresa || "").toLowerCase();
-  const equipoItem = (item.equipo || "").toLowerCase();
-  const empresaFiltro = (empresaFilter || "").toLowerCase();
-  const equipoFiltro = (equipoFilter || "").toLowerCase();
+    const empresaItem = (item.empresa || "").toLowerCase();
+    const equipoItem = (item.equipo || "").toLowerCase();
+    const empresaFiltro = (empresaFilter || "").toLowerCase();
+    const equipoFiltro = (equipoFilter || "").toLowerCase();
 
-  return (!equipoFiltro || equipoItem === equipoFiltro) &&
-         (!empresaFiltro || empresaItem.includes(empresaFiltro));
-});
+    return (!equipoFiltro || equipoItem === equipoFiltro) &&
+      (!empresaFiltro || empresaItem.includes(empresaFiltro));
+  });
 
-  
+
   const handleAddEmpresa = () => {
     setNuevoNombreEmpresa("");
     setModalAddOpen(true);
@@ -230,22 +230,42 @@ useEffect(() => {
     setEmpresaSeleccionada(empresa);
     setNuevoNombreEmpresa(empresa);
     setModalEditOpen(true);
+
   };
 
   const confirmEditEmpresa = async () => {
+
     const nuevoNombre = nuevoNombreEmpresa.trim();
+
     if (!nuevoNombre || !empresaSeleccionada) return;
-    const empresaOriginal = data.find(e => e.empresa === empresaSeleccionada && e.equipo === equipoFilter);
+
+    const empresaOriginal = data.find(e =>
+      e.empresa === empresaSeleccionada &&
+      (nombreUsuario === "Flexxus" || e.equipo === equipoFilter)
+    );
+
     if (!empresaOriginal) return;
 
     const nuevo = { ...empresaOriginal, empresa: nuevoNombre };
     const oldDocId = `${empresaOriginal.empresa}_${empresaOriginal.equipo}`;
     const newDocId = `${nuevoNombre}_${empresaOriginal.equipo}`;
 
-    await deleteDoc(doc(db, "empresas", oldDocId));
-    await setDoc(doc(db, "empresas", newDocId), nuevo);
-    setData(data.map(e => e.empresa === empresaSeleccionada ? nuevo : e));
-    setModalEditOpen(false);
+    try {
+      await deleteDoc(doc(db, "empresas", oldDocId));
+      await setDoc(doc(db, "empresas", newDocId), nuevo);
+
+      const updated = data.map(e =>
+        e.empresa === empresaSeleccionada && e.equipo === empresaOriginal.equipo
+          ? nuevo
+          : e
+      );
+
+      setData(updated);
+      setModalEditOpen(false);
+
+    } catch (error) {
+      console.error("Error al editar empresa:", error);
+    }
   };
 
   const handleDeleteEmpresa = (empresa) => {
@@ -263,13 +283,13 @@ useEffect(() => {
     setModalDeleteOpen(false);
   };
 
-
-return (
+  return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-center w-full">Gestión de Llamadas a Clientes con Soporte Básico</h1>
         <div className="absolute top-4 right-4 flex gap-3 items-center">
-          {nombreUsuario && <span className="text-white font-semibold mr-2">{nombreUsuario}</span>} {isLogged ? (
+          {nombreUsuario && <span className="text-white font-semibold mr-2">{nombreUsuario}</span>}
+          {isLogged ? (
             <LogOut className="text-red-400 cursor-pointer hover:text-red-600" size={28} onClick={handleLogout} />
           ) : (
             <LogIn className="text-green-400 cursor-pointer hover:text-green-600" size={28} onClick={() => setLoginModal(true)} />
@@ -298,8 +318,10 @@ return (
               <option value="Equipo Corralon">Equipo Corralon</option>
             </select>
           </div>
-        <Button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" onClick={handleAddEmpresa}>+ Nueva Empresa</Button>
-</div>
+          <Button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" onClick={handleAddEmpresa}>
+            + Nueva Empresa
+          </Button>
+        </div>
         {isLogged && (
           <div className="relative group">
             <input type="file" id="excelUpload" accept=".xlsx, .xls" onChange={handleFileUpload} className="hidden" />
@@ -315,94 +337,91 @@ return (
           const llamadasDisponibles = 5 - item.llamadas.length;
           const bgColor = llamadasDisponibles === 0 ? "bg-red-400/20" : "bg-green-400/20";
           return (
-            
-<Card key={index} className={bgColor}>
-  <div style={{ position: "relative" }}>
-    {isLogged && (
-      <div style={{ position: "absolute", top: "8px", right: "8px", display: "flex", gap: "8px" }}>
-        <button
-          onClick={() => {
-            setModalEditOpen(true);
-            setEmpresaSeleccionada(empresa.nombre);
-            setNuevoNombreEmpresa(empresa.nombre);
-            setNuevoEquipoEmpresa(empresa.equipo);
-          }}
-          style={{
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            padding: 0
-          }}
-        >
-          
-        </button>
-        <button
-          onClick={() => {
-            setModalDeleteOpen(true);
-            setEmpresaSeleccionada(empresa.nombre);
-          }}
-          style={{
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            padding: 0
-          }}
-        >
-          
-        </button>
-      </div>
-    )}
-    
-              <CardContent className="p-4 relative">
 
+            <Card key={index} className={bgColor}>
+              <div style={{ position: "relative" }}>
+                {isLogged && (
+                  <div style={{ position: "absolute", top: "8px", right: "8px", display: "flex", gap: "8px" }}>
+                    <button
+                      onClick={() => {
+                        setModalEditOpen(true);
+                        setEmpresaSeleccionada(empresa.nombre);
+                        setNuevoNombreEmpresa(empresa.nombre);
+                        setNuevoEquipoEmpresa(empresa.equipo);
+                      }}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: 0
+                      }}
+                    >
 
-{isLogged && (item.equipo === equipoFilter || equipoFilter === "") && (
-  <div className="absolute bottom-2 left-3">
-    <span
-      className="cursor-pointer"
-      title="AGREGAR LLAMADA"
-      onClick={() => handleAddLlamadaClick(item.empresa)}
-    >
-      <div style={{ marginTop: "20px" }}><div style={{ marginTop: "20px", display: "flex", justifyContent: "center" }}><img src="/icons/phone.png" alt="Agregar llamada" className="h-10 w-10 transition-transform duration-200 hover:scale-110" /></div></div>
-    </span>
-  </div>
-)}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setModalDeleteOpen(true);
+                        setEmpresaSeleccionada(empresa.nombre);
+                      }}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: 0
+                      }}
+                    >
 
-                <h2 className="text-lg font-semibold">{item.empresa}</h2>
-                <p>Llamadas disponibles: {llamadasDisponibles}</p>
-                <ul className="list-disc pl-4">
-                  {item.llamadas.map((llamada, i) => (
-                    <li key={i}>
-                      <strong>{llamada.motivo}</strong>: {llamada.descripcion} (Ticket: {llamada.ticket})
-                    </li>
-                  ))}
-                </ul>
+                    </button>
+                  </div>
+                )}
 
-{isLogged && (nombreUsuario === "Flexxus" || item.equipo === equipoFilter) && (
-  <div className="absolute bottom-2 left-3 flex gap-4">
-    <span
-      className="cursor-pointer"
-      title="EDITAR EMPRESA"
-      onClick={() => handleEditEmpresa(item.empresa)}
-    >
-      
-    </span>
-    <span
-      className="cursor-pointer"
-      title="ELIMINAR EMPRESA"
-      onClick={() => handleDeleteEmpresa(item.empresa)}
-    >
-      
-    </span>
-  </div>
-)}
+                <CardContent className="p-4 relative pb-16">
 
-                
+                  <h2 className="text-lg font-semibold">{item.empresa}</h2>
+                  <p>Llamadas disponibles: {llamadasDisponibles}</p>
+                  <ul className="list-disc pl-4">
+                    {item.llamadas.map((llamada, i) => (
+                      <li key={i}>
+                        <strong>{llamada.motivo}</strong>: {llamada.descripcion} (Ticket: {llamada.ticket})
+                      </li>
+                    ))}
+                  </ul>
 
-              </CardContent>
-            
-  </div>
-</Card>
+                  {isLogged && (item.equipo === equipoFilter || equipoFilter === "") && item.llamadas.length < 5 && (
+                    <div className="absolute bottom-2 right-2">
+                      <span
+                        className="cursor-pointer"
+                        title="AGREGAR LLAMADA"
+                        onClick={() => handleAddLlamadaClick(item.empresa)}
+                      >
+                        <PhoneCall size={24} className="text-white hover:scale-110 transition-transform" />
+                      </span>
+                    </div>
+                  )}
+
+                  {isLogged && (nombreUsuario === "Flexxus" || item.equipo === equipoFilter) && (
+                    <div className="absolute top-2 right-2 flex items-center gap-2">
+                      <span
+                        className="cursor-pointer"
+                        title="EDITAR EMPRESA"
+                        onClick={() => handleEditEmpresa(item.empresa)}
+                      >
+                        <Pencil size={20} className="text-white hover:scale-110 transition-transform" />
+                      </span>
+                      <span
+                        className="cursor-pointer"
+                        title="ELIMINAR EMPRESA"
+                        onClick={() => handleDeleteEmpresa(item.empresa)}
+                      >
+                        <Trash2 size={20} className="text-white hover:scale-110 transition-transform" />
+                      </span>
+                    </div>
+                  )}
+
+                </CardContent>
+
+              </div>
+            </Card>
 
           );
         })}
@@ -468,7 +487,7 @@ return (
           </div>
         </div>
       )}
-    
+
       {/* MODAL NUEVA EMPRESA */}
       {modalAddOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
@@ -522,6 +541,8 @@ return (
         </div>
       )}
 
-</div>
+    </div>
+
   );
+
 }
