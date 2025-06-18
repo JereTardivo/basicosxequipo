@@ -218,7 +218,7 @@ useEffect(() => {
     const docId = `${nombre}_${equipoFilter || "admin"}`;
     const nueva = {
       empresa: nombre,
-      equipo: equipoFilter,
+      equipo: nuevoEquipoEmpresa,
       llamadas: [],
     };
     await setDoc(doc(db, "empresas", docId), nueva);
@@ -320,7 +320,7 @@ return (
 
 
 {isLogged && (item.equipo === equipoFilter || equipoFilter === "") && (
-  <div className="absolute bottom-2 right-3">
+  <div className="absolute bottom-2 left-3">
     <span
       className="cursor-pointer"
       title="AGREGAR LLAMADA"
@@ -342,7 +342,7 @@ return (
                 </ul>
 
 {isLogged && (nombreUsuario === "Flexxus" || item.equipo === equipoFilter) && (
-  <div className="absolute bottom-2 right-3 flex gap-4">
+  <div className="absolute bottom-2 left-3 flex gap-4">
     <span
       className="cursor-pointer"
       title="EDITAR EMPRESA"
