@@ -282,10 +282,9 @@ export default function App() {
     }
 
     const equipoReal = empresaObj.equipo;
-    const docId = `${empresaObj.empresa}_${equipoReal}`;
+    const docId = empresaObj.empresa;
 
     try {
-      console.log(docId);
       await deleteDoc(doc(db, "empresas", docId));
       console.log("Eliminado correctamente:", docId);
       setData(data.filter(e => !(e.empresa === empresaObj.empresa && e.equipo === equipoReal)));
