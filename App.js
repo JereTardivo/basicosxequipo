@@ -316,24 +316,7 @@ return (
           return (
             <Card key={index} className={bgColor}>
               <CardContent className="p-4 relative">
-{isLogged && (item.equipo === equipoFilter || equipoFilter === "") && (
-  <div className="absolute top-2 right-3 flex gap-2">
-    <span
-      className="cursor-pointer"
-      title="EDITAR EMPRESA"
-      onClick={() => handleEditEmpresa(item.empresa)}
-    >
-      <img src="/icons/edit.png" alt="Editar" className="h-5 w-5 transition-transform duration-200 hover:scale-110" />
-    </span>
-    <span
-      className="cursor-pointer"
-      title="ELIMINAR EMPRESA"
-      onClick={() => handleDeleteEmpresa(item.empresa)}
-    >
-      <img src="/icons/delete.png" alt="Eliminar" className="h-5 w-5 transition-transform duration-200 hover:scale-110" />
-    </span>
-  </div>
-)}
+
 
 {isLogged && (item.equipo === equipoFilter || equipoFilter === "") && (
   <div className="absolute bottom-2 right-3">
@@ -342,7 +325,7 @@ return (
       title="AGREGAR LLAMADA"
       onClick={() => handleAddLlamadaClick(item.empresa)}
     >
-      <img src="/icons/phone.png" alt="Agregar llamada" className="h-6 w-6 transition-transform duration-200 hover:scale-110" />
+      <img src="/icons/phone.png" alt="Agregar llamada" className="h-10 w-10 transition-transform duration-200 hover:scale-110" />
     </span>
   </div>
 )}
