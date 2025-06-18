@@ -351,13 +351,13 @@ export default function App() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-start auto-rows-min grid-flow-dense">
         {filteredData.map((item, index) => {
           const llamadasDisponibles = 5 - item.llamadas.length;
           const bgColor = llamadasDisponibles === 0 ? "bg-red-400/20" : "bg-green-400/20";
           return (
 
-            <Card key={index} className={bgColor}>
+            <Card key={index} className={`${bgColor} hover:shadow-xl hover:scale-105 transition-transform duration-300`}>
               <div style={{ position: "relative" }}>
                 {isLogged && (
                   <div style={{ position: "absolute", top: "8px", right: "8px", display: "flex", gap: "8px" }}>
@@ -398,13 +398,16 @@ export default function App() {
 
                   <h2 className="text-xl font-bold tracking-wide">{item.empresa}</h2>
                   <p>Llamadas disponibles: {llamadasDisponibles}</p>
-                  <ul className="list-disc pl-4">
-                    {item.llamadas.map((llamada, i) => (
-                      <li key={i}>
-                        <strong>{llamada.motivo}</strong>: {llamada.descripcion} (Ticket: {llamada.ticket})
-                      </li>
-                    ))}
-                  </ul>
+                  <ul className="pl-4">
+  {item.llamadas.map((llamada, i) => (
+    <div key={i} className="pb-2">
+      <li className="ml-4">
+        <strong>{llamada.motivo}</strong>: {llamada.descripcion} (Ticket: {llamada.ticket})
+      </li>
+      {i !== item.llamadas.length - 1 && <hr className="border-gray-600 my-2" />}
+    </div>
+  ))}
+</ul>
 
                   {isLogged && (item.equipo === equipoFilter || equipoFilter === "") && item.llamadas.length < 5 && (
                     <div className="absolute bottom-2 right-2">
