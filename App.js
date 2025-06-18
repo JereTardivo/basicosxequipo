@@ -283,6 +283,8 @@ export default function App() {
     setModalDeleteOpen(false);
   };
 
+  const esFormularioValido = nuevoNombreEmpresa.trim() !== "" && nuevoEquipoEmpresa !== "";
+
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
       <div className="flex justify-between items-center mb-6">
@@ -500,9 +502,32 @@ export default function App() {
               placeholder="Nombre de la empresa"
               className="w-full p-2 rounded bg-gray-700 text-white mb-4"
             />
+            <select
+              value={nuevoEquipoEmpresa}
+              onChange={(e) => setNuevoEquipoEmpresa(e.target.value)}
+              className="w-full p-2 rounded bg-gray-700 text-white mb-4"
+              required
+            >
+              <option value="">Seleccionar equipo</option>
+              <option value="Equipo 1">Equipo 1</option>
+              <option value="Equipo 2">Equipo 2</option>
+              <option value="Equipo 3">Equipo 3</option>
+              <option value="Equipo 4">Equipo 4</option>
+              <option value="Equipo 5">Equipo 5</option>
+              <option value="Equipo Corralon">Equipo Corralon</option>
+            </select>
             <div className="flex justify-end gap-2">
               <button onClick={() => setModalAddOpen(false)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Cancelar</button>
-              <button onClick={confirmAddEmpresa} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Agregar</button>
+              <button
+                onClick={confirmAddEmpresa}
+                disabled={!esFormularioValido}
+                className={`px-4 py-2 rounded text-white ${esFormularioValido
+                    ? "bg-green-500 hover:bg-green-600"
+                    : "bg-green-500 opacity-50 cursor-not-allowed"
+                  }`}
+              >
+                Agregar
+              </button>
             </div>
           </div>
         </div>
