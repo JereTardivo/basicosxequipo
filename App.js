@@ -402,7 +402,7 @@ export default function App() {
   {item.llamadas.map((llamada, i) => (
     <div key={i} className="pb-2">
       <li className="ml-4">
-        <strong>{llamada.motivo}</strong>: {llamada.descripcion} (Ticket: {llamada.ticket})
+        <strong>{llamada.motivo}</strong>: {llamada.descripcion} (Ticket: <a href={`https://soporte.flexxus.com.ar/tickets/${llamada.ticket}`} target="_blank" className="text-blue-400 underline hover:text-blue-300">{llamada.ticket}</a>)
       </li>
       {i !== item.llamadas.length - 1 && <hr className="border-gray-600 my-2" />}
     </div>
