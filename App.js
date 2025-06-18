@@ -363,7 +363,7 @@ return (
       title="AGREGAR LLAMADA"
       onClick={() => handleAddLlamadaClick(item.empresa)}
     >
-      <div style={{ marginTop: "20px" }}><img src="/icons/phone.png" alt="Agregar llamada" className="h-10 w-10 transition-transform duration-200 hover:scale-110" /></div>
+      <div style={{ marginTop: "20px" }}><div style={{ marginTop: "20px", display: "flex", justifyContent: "center" }}><img src="/icons/phone.png" alt="Agregar llamada" className="h-10 w-10 transition-transform duration-200 hover:scale-110" /></div></div>
     </span>
   </div>
 )}
