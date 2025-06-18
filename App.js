@@ -148,7 +148,7 @@ export default function App() {
 
       setData(newData);
       for (const row of newData) {
-        const docId = `${row.empresa}_${row.equipo}`;
+        const docId = row.empresa;
         await setDoc(doc(db, "empresas", docId), row);
       }
     };
@@ -184,7 +184,7 @@ export default function App() {
       if (item.empresa === selectedEmpresa && item.llamadas.length < 5) {
         const nuevas = [...item.llamadas, { ...formValues }];
         const updatedItem = { ...item, llamadas: nuevas };
-        const docId = `${item.empresa}_${item.equipo}`;
+        const docId = item.empresa;
         setDoc(doc(db, "empresas", docId), updatedItem);
         return updatedItem;
       }
@@ -215,7 +215,7 @@ export default function App() {
   const confirmAddEmpresa = async () => {
     const nombre = nuevoNombreEmpresa.trim();
     if (!nombre) return;
-    const docId = `${nombre}_${equipoFilter || "admin"}`;
+    const docId = nombre;
     const nueva = {
       empresa: nombre,
       equipo: nuevoEquipoEmpresa,
@@ -247,8 +247,8 @@ export default function App() {
     if (!empresaOriginal) return;
 
     const nuevo = { ...empresaOriginal, empresa: nuevoNombre };
-    const oldDocId = `${empresaOriginal.empresa}_${empresaOriginal.equipo}`;
-    const newDocId = `${nuevoNombre}_${empresaOriginal.equipo}`;
+    const oldDocId = empresaOriginal.empresa;
+    const newDocId = nuevoNombre;
 
     try {
       await deleteDoc(doc(db, "empresas", oldDocId));
@@ -274,21 +274,24 @@ export default function App() {
   };
 
   const confirmDeleteEmpresa = async () => {
-    const empresaObj = data.find(e =>
-      e.empresa === empresaSeleccionada &&
-      (nombreUsuario === "Flexxus" || e.equipo === equipoFilter)
-    );
-    if (!empresaObj) return;
+    const empresaObj = data.find(e => e.empresa === empresaSeleccionada);
 
-    const docId = `${empresaSeleccionada}_${empresaObj.equipo}`;
+    if (!empresaObj) {
+      console.error("Empresa no encontrada para eliminar");
+      return;
+    }
+
+    const equipoReal = empresaObj.equipo;
+    const docId = `${empresaObj.empresa}_${equipoReal}`;
+
     try {
-      await deleteDoc(doc(db, "empresas", docId)); // 🔥 Elimina de Firestore
-      setData(data.filter(e =>
-        !(e.empresa === empresaSeleccionada && e.equipo === empresaObj.equipo)
-      ));
+      console.log(docId);
+      await deleteDoc(doc(db, "empresas", docId));
+      console.log("Eliminado correctamente:", docId);
+      setData(data.filter(e => !(e.empresa === empresaObj.empresa && e.equipo === equipoReal)));
       setModalDeleteOpen(false);
     } catch (error) {
-      console.error("Error al eliminar empresa:", error);
+      console.error("Error al eliminar empresa de Firebase:", error);
     }
   };
 
@@ -362,9 +365,9 @@ export default function App() {
                     <button
                       onClick={() => {
                         setModalEditOpen(true);
-                        setEmpresaSeleccionada(empresa.nombre);
-                        setNuevoNombreEmpresa(empresa.nombre);
-                        setNuevoEquipoEmpresa(empresa.equipo);
+                        setEmpresaSeleccionada(item.empresa);
+                        setNuevoNombreEmpresa(item.empresa);
+                        setNuevoEquipoEmpresa(item.equipo);
                       }}
                       style={{
                         background: "transparent",
@@ -378,7 +381,7 @@ export default function App() {
                     <button
                       onClick={() => {
                         setModalDeleteOpen(true);
-                        setEmpresaSeleccionada(empresa.nombre);
+                        setEmpresaSeleccionada(item.empresa);
                       }}
                       style={{
                         background: "transparent",
