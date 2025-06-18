@@ -315,7 +315,27 @@ return (
           const llamadasDisponibles = 5 - item.llamadas.length;
           const bgColor = llamadasDisponibles === 0 ? "bg-red-400/20" : "bg-green-400/20";
           return (
-            <Card key={index} className={bgColor}>
+            
+<Card key={index} className={bgColor}>
+  <div style={{ position: "relative" }}>
+    <button
+      onClick={() => {
+        setModalDeleteOpen(true);
+        setEmpresaSeleccionada(empresa.nombre);
+      }}
+      style={{
+        position: "absolute",
+        top: "8px",
+        right: "8px",
+        background: "transparent",
+        border: "none",
+        cursor: "pointer",
+        padding: 0
+      }}
+    >
+      <img src="/icons/delete.png" alt="Eliminar" style={{ width: "24px", height: "24px" }} />
+    </button>
+    
               <CardContent className="p-4 relative">
 
 
@@ -363,7 +383,10 @@ return (
                 
 
               </CardContent>
-            </Card>
+            
+  </div>
+</Card>
+
           );
         })}
       </div>
