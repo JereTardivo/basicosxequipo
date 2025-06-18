@@ -298,11 +298,11 @@ export default function App() {
   const esFormularioValido = nuevoNombreEmpresa.trim() !== "" && nuevoEquipoEmpresa !== "";
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-800 to-gray-900 text-gray-200 p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-center w-full">Gestión de Llamadas a Clientes con Soporte Básico</h1>
         <div className="absolute top-4 right-4 flex gap-3 items-center">
-          {nombreUsuario && <span className="text-white font-semibold mr-2">{nombreUsuario}</span>}
+          {nombreUsuario && <span className="text-gray-200 font-semibold mr-2">{nombreUsuario}</span>}
           {isLogged ? (
             <LogOut className="text-red-400 cursor-pointer hover:text-red-600" size={28} onClick={handleLogout} />
           ) : (
@@ -313,16 +313,16 @@ export default function App() {
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
-          <div className="flex items-center bg-gray-800 border border-gray-600 rounded-md px-2">
-            <Building size={18} className="text-white mr-2" />
+          <div className="flex items-center bg-gray-700 border border-gray-600 rounded-2xl-md px-2">
+            <Building size={18} className="text-gray-200 mr-2" />
             <input type="text" placeholder="Filtrar por empresa" value={empresaFilter}
               onChange={(e) => setEmpresaFilter(e.target.value)}
-              className="bg-transparent outline-none text-white p-2 w-full" />
+              className="bg-transparent outline-none text-gray-200 p-2 w-full" />
           </div>
-          <div className="flex items-center bg-gray-800 border border-gray-600 rounded-md px-2">
-            <Users size={18} className="text-white mr-2" />
+          <div className="flex items-center bg-gray-700 border border-gray-600 rounded-2xl-md px-2">
+            <Users size={18} className="text-gray-200 mr-2" />
             <select value={equipoFilter} onChange={(e) => setEquipoFilter(e.target.value)}
-              className="bg-gray-800 text-white border-none p-2 w-full appearance-none">
+              className="bg-gray-700 text-gray-200 border-none p-2 w-full appearance-none">
               <option value="">Todos los equipos</option>
               <option value="Equipo 1">Equipo 1</option>
               <option value="Equipo 2">Equipo 2</option>
@@ -334,7 +334,7 @@ export default function App() {
           </div>
           {isLogged && (
             <Button
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              className="bg-blue-600 text-gray-200 px-4 py-2 rounded-2xl hover:bg-blue-700 focus:ring-2 focus:ring-blue-400"
               onClick={handleAddEmpresa}
             >
               + Nueva Empresa
@@ -344,7 +344,7 @@ export default function App() {
         {isLogged && (
           <div className="relative group">
             <input type="file" id="excelUpload" accept=".xlsx, .xls" onChange={handleFileUpload} className="hidden" />
-            <label htmlFor="excelUpload" className="cursor-pointer hover:scale-110 transition-transform">
+            <label htmlFor="excelUpload" className="cursor-pointer hover:scale-110 transition-transform duration-200">
               <FileSpreadsheet size={36} className="text-green-400" />
             </label>
           </div>
@@ -394,9 +394,9 @@ export default function App() {
                   </div>
                 )}
 
-                <CardContent className="p-4 relative pb-16">
+                <CardContent className="p-6 relative pb-16">
 
-                  <h2 className="text-lg font-semibold">{item.empresa}</h2>
+                  <h2 className="text-xl font-bold tracking-wide">{item.empresa}</h2>
                   <p>Llamadas disponibles: {llamadasDisponibles}</p>
                   <ul className="list-disc pl-4">
                     {item.llamadas.map((llamada, i) => (
@@ -413,7 +413,7 @@ export default function App() {
                         title="AGREGAR LLAMADA"
                         onClick={() => handleAddLlamadaClick(item.empresa)}
                       >
-                        <PhoneCall size={24} className="text-white hover:scale-110 transition-transform" />
+                        <PhoneCall size={24} className="text-gray-200 hover:scale-110 transition-transform duration-200" />
                       </span>
                     </div>
                   )}
@@ -425,14 +425,14 @@ export default function App() {
                         title="EDITAR EMPRESA"
                         onClick={() => handleEditEmpresa(item.empresa)}
                       >
-                        <Pencil size={20} className="text-white hover:scale-110 transition-transform" />
+                        <Pencil size={20} className="text-gray-200 hover:scale-110 transition-transform duration-200" />
                       </span>
                       <span
                         className="cursor-pointer"
                         title="ELIMINAR EMPRESA"
                         onClick={() => handleDeleteEmpresa(item.empresa)}
                       >
-                        <Trash2 size={20} className="text-white hover:scale-110 transition-transform" />
+                        <Trash2 size={20} className="text-gray-200 hover:scale-110 transition-transform duration-200" />
                       </span>
                     </div>
                   )}
@@ -448,35 +448,35 @@ export default function App() {
 
       {modalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
-          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-md">
+          <div className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 p-6 rounded-2xl-lg w-full max-w-md">
             <h2 className="text-lg font-bold mb-4">Agregar llamada</h2>
 
-            <label className="text-sm text-white mb-1 block">Motivo</label>
+            <label className="text-sm uppercase text-gray-400 text-gray-200 mb-1 block">Motivo</label>
             <input type="text" placeholder="Motivo" value={formValues.motivo}
               onChange={(e) => setFormValues({ ...formValues, motivo: e.target.value })}
-              className="w-full mb-1 p-2 rounded bg-gray-700 text-white" />
-            {errors.motivo && <p className="text-red-400 text-sm mb-2">{errors.motivo}</p>}
+              className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full mb-1 p-2 rounded-2xl bg-gray-700 text-gray-200" />
+            {errors.motivo && <p className="text-red-400 text-sm uppercase text-gray-400 mb-2">{errors.motivo}</p>}
 
-            <label className="text-sm text-white mb-1 block">Descripción</label>
+            <label className="text-sm uppercase text-gray-400 text-gray-200 mb-1 block">Descripción</label>
             <textarea rows="3" placeholder="Descripción" value={formValues.descripcion}
               onChange={(e) => setFormValues({ ...formValues, descripcion: e.target.value })}
-              className="w-full mb-1 p-2 rounded bg-gray-700 text-white resize-none" />
-            {errors.descripcion && <p className="text-red-400 text-sm mb-2">{errors.descripcion}</p>}
+              className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full mb-1 p-2 rounded-2xl bg-gray-700 text-gray-200 resize-none" />
+            {errors.descripcion && <p className="text-red-400 text-sm uppercase text-gray-400 mb-2">{errors.descripcion}</p>}
 
-            <label className="text-sm text-white mb-1 block">Ticket (6 dígitos)</label>
+            <label className="text-sm uppercase text-gray-400 text-gray-200 mb-1 block">Ticket (6 dígitos)</label>
             <input type="number" placeholder="123456" value={formValues.ticket}
               onChange={(e) => {
                 const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 6);
                 setFormValues({ ...formValues, ticket: value });
               }}
-              className="w-1/2 mb-3 p-2 rounded bg-gray-700 text-white" />
-            {errors.ticket && <p className="text-red-400 text-sm mb-4">{errors.ticket}</p>}
+              className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-1/2 mb-3 p-2 rounded-2xl bg-gray-700 text-gray-200" />
+            {errors.ticket && <p className="text-red-400 text-sm uppercase text-gray-400 mb-4">{errors.ticket}</p>}
 
             <div className="flex justify-end gap-2">
-              <button onClick={() => setModalOpen(false)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+              <button onClick={() => setModalOpen(false)} className="bg-red-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-red-600 focus:ring-2 focus:ring-red-400">
                 Cancelar
               </button>
-              <button onClick={handleModalSubmit} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+              <button onClick={handleModalSubmit} className="bg-green-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-green-600 focus:ring-2 focus:ring-green-400">
                 Guardar
               </button>
             </div>
@@ -486,20 +486,20 @@ export default function App() {
 
       {loginModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
-          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-sm">
+          <div className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 p-6 rounded-2xl-lg w-full max-w-sm">
             <h2 className="text-lg font-bold mb-4">Iniciar sesión</h2>
             <input type="text" placeholder="Usuario" value={login.user}
               onChange={(e) => setLogin({ ...login, user: e.target.value })}
-              className="w-full mb-3 p-2 rounded bg-gray-700 text-white" />
+              className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full mb-3 p-2 rounded-2xl bg-gray-700 text-gray-200" />
             <input type="password" placeholder="Contraseña" value={login.pass}
               onChange={(e) => setLogin({ ...login, pass: e.target.value })}
-              className="w-full mb-3 p-2 rounded bg-gray-700 text-white" />
-            {loginError && <p className="text-red-400 text-sm mb-2">{loginError}</p>}
+              className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full mb-3 p-2 rounded-2xl bg-gray-700 text-gray-200" />
+            {loginError && <p className="text-red-400 text-sm uppercase text-gray-400 mb-2">{loginError}</p>}
             <div className="flex justify-end gap-2">
-              <button onClick={() => setLoginModal(false)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+              <button onClick={() => setLoginModal(false)} className="bg-red-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-red-600 focus:ring-2 focus:ring-red-400">
                 Cancelar
               </button>
-              <button onClick={handleLogin} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+              <button onClick={handleLogin} className="bg-green-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-green-600 focus:ring-2 focus:ring-green-400">
                 Entrar
               </button>
             </div>
@@ -510,20 +510,20 @@ export default function App() {
       {/* MODAL NUEVA EMPRESA */}
       {modalAddOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
-          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-md">
+          <div className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 p-6 rounded-2xl-lg w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">Agregar nueva empresa</h2>
             <input
               type="text"
               value={nuevoNombreEmpresa}
               onChange={(e) => setNuevoNombreEmpresa(e.target.value)}
               placeholder="Nombre de la empresa"
-              className="w-full p-2 rounded bg-gray-700 text-white mb-4"
+              className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full p-2 rounded-2xl bg-gray-700 text-gray-200 mb-4"
             />
             {nombreUsuario === "Flexxus" ? (
               <select
                 value={nuevoEquipoEmpresa}
                 onChange={(e) => setNuevoEquipoEmpresa(e.target.value)}
-                className="w-full p-2 rounded bg-gray-700 text-white mb-4"
+                className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full p-2 rounded-2xl bg-gray-700 text-gray-200 mb-4"
               >
                 <option value="">Seleccionar equipo</option>
                 <option value="Equipo 1">Equipo 1</option>
@@ -537,18 +537,18 @@ export default function App() {
               <select
                 value={nuevoEquipoEmpresa}
                 disabled
-                className="w-full p-2 rounded bg-gray-700 text-white mb-4 opacity-60 cursor-not-allowed"
+                className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full p-2 rounded-2xl bg-gray-700 text-gray-200 mb-4 opacity-60 cursor-not-allowed"
               >
                 <option value={nombreUsuario}>{nombreUsuario}</option>
               </select>
             )}
             <div className="flex justify-end gap-2">
-              <button onClick={() => setModalAddOpen(false)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Cancelar</button>
+              <button onClick={() => setModalAddOpen(false)} className="bg-red-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-red-600 focus:ring-2 focus:ring-red-400">Cancelar</button>
               <button
                 onClick={confirmAddEmpresa}
                 disabled={!esFormularioValido}
-                className={`px-4 py-2 rounded text-white ${esFormularioValido
-                  ? "bg-green-500 hover:bg-green-600"
+                className={`px-4 py-2 rounded-2xl text-gray-200 ${esFormularioValido
+                  ? "bg-green-500 hover:bg-green-600 focus:ring-2 focus:ring-green-400"
                   : "bg-green-500 opacity-50 cursor-not-allowed"
                   }`}
               >
@@ -562,17 +562,17 @@ export default function App() {
       {/* MODAL EDITAR EMPRESA */}
       {modalEditOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
-          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-md">
+          <div className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 p-6 rounded-2xl-lg w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">Editar nombre de empresa</h2>
             <input
               type="text"
               value={nuevoNombreEmpresa}
               onChange={(e) => setNuevoNombreEmpresa(e.target.value)}
-              className="w-full p-2 rounded bg-gray-700 text-white mb-4"
+              className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full p-2 rounded-2xl bg-gray-700 text-gray-200 mb-4"
             />
             <div className="flex justify-end gap-2">
-              <button onClick={() => setModalEditOpen(false)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Cancelar</button>
-              <button onClick={confirmEditEmpresa} className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Guardar</button>
+              <button onClick={() => setModalEditOpen(false)} className="bg-red-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-red-600 focus:ring-2 focus:ring-red-400">Cancelar</button>
+              <button onClick={confirmEditEmpresa} className="bg-yellow-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-yellow-600">Guardar</button>
             </div>
           </div>
         </div>
@@ -581,12 +581,12 @@ export default function App() {
       {/* MODAL ELIMINAR EMPRESA */}
       {modalDeleteOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
-          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-md">
+          <div className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 p-6 rounded-2xl-lg w-full max-w-md">
             <h2 className="text-xl font-bold mb-4 text-red-400">Eliminar empresa</h2>
-            <p className="text-white mb-6">¿Estás seguro de que querés eliminar "{empresaSeleccionada}"?</p>
+            <p className="text-gray-200 mb-6">¿Estás seguro de que querés eliminar "{empresaSeleccionada}"?</p>
             <div className="flex justify-end gap-2">
-              <button onClick={() => setModalDeleteOpen(false)} className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancelar</button>
-              <button onClick={confirmDeleteEmpresa} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Eliminar</button>
+              <button onClick={() => setModalDeleteOpen(false)} className="bg-gray-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-gray-600">Cancelar</button>
+              <button onClick={confirmDeleteEmpresa} className="bg-red-600 text-gray-200 px-4 py-2 rounded-2xl hover:bg-red-700">Eliminar</button>
             </div>
           </div>
         </div>
