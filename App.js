@@ -38,8 +38,8 @@ const [nombreUsuario, setNombreUsuario] = useState("");
   const [modalEditOpen, setModalEditOpen] = useState(false);
   const [modalDeleteOpen, setModalDeleteOpen] = useState(false);
   const [empresaSeleccionada, setEmpresaSeleccionada] = useState("");
-  const [nuevoNombreEmpresa, setNuevoNombreEmpresa],
-    [nuevoEquipoEmpresa, setNuevoEquipoEmpresa] = useState("");
+  const [nuevoNombreEmpresa, setNuevoNombreEmpresa] = useState("");
+const [nuevoEquipoEmpresa, setNuevoEquipoEmpresa] = useState("");
 
 
 const credencialesEquipos = {
