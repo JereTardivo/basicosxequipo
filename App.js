@@ -274,14 +274,24 @@ export default function App() {
   };
 
   const confirmDeleteEmpresa = async () => {
-    const empresaObj = data.find(e => e.empresa === empresaSeleccionada && e.equipo === equipoFilter);
+    const empresaObj = data.find(e =>
+      e.empresa === empresaSeleccionada &&
+      (nombreUsuario === "Flexxus" || e.equipo === equipoFilter)
+    );
     if (!empresaObj) return;
 
     const docId = `${empresaSeleccionada}_${empresaObj.equipo}`;
-    await deleteDoc(doc(db, "empresas", docId));
-    setData(data.filter(e => e.empresa !== empresaSeleccionada));
-    setModalDeleteOpen(false);
+    try {
+      await deleteDoc(doc(db, "empresas", docId)); // 🔥 Elimina de Firestore
+      setData(data.filter(e =>
+        !(e.empresa === empresaSeleccionada && e.equipo === empresaObj.equipo)
+      ));
+      setModalDeleteOpen(false);
+    } catch (error) {
+      console.error("Error al eliminar empresa:", error);
+    }
   };
+
 
   const esFormularioValido = nuevoNombreEmpresa.trim() !== "" && nuevoEquipoEmpresa !== "";
 
