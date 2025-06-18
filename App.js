@@ -339,6 +339,26 @@ return (
                     </li>
                   ))}
                 </ul>
+
+{isLogged && (nombreUsuario === "Flexxus" || item.equipo === equipoFilter) && (
+  <div className="flex gap-4 mt-4 justify-end">
+    <span
+      className="cursor-pointer"
+      title="EDITAR EMPRESA"
+      onClick={() => handleEditEmpresa(item.empresa)}
+    >
+      <img src="/icons/edit.png" alt="Editar" className="h-7 w-7 transition-transform duration-200 hover:scale-110" />
+    </span>
+    <span
+      className="cursor-pointer"
+      title="ELIMINAR EMPRESA"
+      onClick={() => handleDeleteEmpresa(item.empresa)}
+    >
+      <img src="/icons/delete.png" alt="Eliminar" className="h-7 w-7 transition-transform duration-200 hover:scale-110" />
+    </span>
+  </div>
+)}
+
                 
 
               </CardContent>
