@@ -12,7 +12,7 @@ import {
   deleteDoc,
   getDoc
 } from "firebase/firestore";
-import { Pencil, Trash2, PhoneCall, FileSpreadsheet, LogIn, LogOut, Building, Users, KeyRound } from "lucide-react";
+import { Pencil, Trash2, PhoneCall, FileSpreadsheet, LogIn, LogOut, Building, Users, KeyRound, SortDesc } from "lucide-react";
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 
@@ -52,6 +52,7 @@ export default function App() {
     repetir: ""
   });
   const [passwordError, setPasswordError] = useState("");
+  const [orden, setOrden] = useState("nombre");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -89,7 +90,6 @@ export default function App() {
     setIsLogged(false);
     setEquipoFilter("");
     setNombreUsuario("");
-    setUsuario("");
     localStorage.removeItem("isLogged");
     localStorage.removeItem("equipoSeleccionado");
   };
@@ -202,6 +202,15 @@ export default function App() {
 
     return (!equipoFiltro || equipoItem === equipoFiltro) &&
       (!empresaFiltro || empresaItem.includes(empresaFiltro));
+  });
+
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (orden === "nombre") {
+      return a.empresa.localeCompare(b.empresa);
+    } else if (orden === "llamadas") {
+      return b.llamadas.length - a.llamadas.length;
+    }
+    return 0;
   });
 
 
@@ -327,7 +336,7 @@ export default function App() {
 
   const handlePasswordChange = async () => {
     setPasswordError("");
-    
+
 
     if (passwordForm.nueva !== passwordForm.repetir) {
       setPasswordError("Las nuevas contraseñas no coinciden.");
@@ -468,11 +477,24 @@ export default function App() {
             </label>
           </div>
         )}
+
+        <div className="flex items-center gap-2 ml-auto">
+          <SortDesc size={20} className="text-gray-300" />
+          <select
+            value={orden}
+            onChange={(e) => setOrden(e.target.value)}
+            className="bg-gray-700 text-gray-200 border border-gray-600 rounded-2xl px-3 py-1"
+          >
+            <option value="nombre">Nombre empresa</option>
+            <option value="llamadas">Llamadas realizadas</option>
+          </select>
+        </div>
+
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-start auto-rows-min grid-flow-dense">
 
-        {filteredData.map((item, index) => {
+        {sortedData.map((item, index) => {
           const bgColor = item.llamadas.length >= 5 ? "bg-red-400/20" : "bg-green-400/20";
           return (
             <div key={index} onClick={() => handleModalOpen(item.empresa)} className="cursor-pointer transform transition-all duration-300 hover:scale-105">
