@@ -90,7 +90,7 @@ export default function App() {
         const data = docSnap.data();
         if (data.password === login.pass) {
           setIsLogged(true);
-          setNombreUsuario(data.usuario);
+          setNombreUsuario(data.nombre || data.usuario);
           setEquipoFilter(data.equipo || "");
           setIsFlexxus(!data.equipo);
           setLoginError("");
@@ -426,6 +426,7 @@ export default function App() {
                       <div key={i} className="pb-2">
                         <li className="ml-4">
                           <strong>{llamada.motivo}</strong>: {llamada.descripcion} (Ticket: <a href={`https://soporte.flexxus.com.ar/tickets/${llamada.ticket}`} target="_blank" className="text-blue-400 underline hover:text-blue-300">{llamada.ticket}</a>)
+                          <p className="text-xs text-gray-400">Cargado por: {llamada.agente}</p>
                         </li>
                         {i !== item.llamadas.length - 1 && <hr className="border-gray-600 my-2" />}
                       </div>
