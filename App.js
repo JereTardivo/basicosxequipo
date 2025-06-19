@@ -42,6 +42,8 @@ export default function App() {
   const [nuevoNombreEmpresa, setNuevoNombreEmpresa] = useState("");
   const [nuevoEquipoEmpresa, setNuevoEquipoEmpresa] = useState("");
   const [isFlexxus, setIsFlexxus] = useState(false);
+  const [editandoIndex, setEditandoIndex] = useState(null);
+  const [editLlamada, setEditLlamada] = useState({ motivo: "", descripcion: "", ticket: "" });
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -290,6 +292,29 @@ export default function App() {
     setFormValues({ motivo: "", descripcion: "", ticket: "" });
   };
 
+  const guardarEdicion = async (index) => {
+    const empresaActual = selectedEmpresa;
+
+    const nuevasLlamadas = [...selectedEmpresaData.llamadas];
+    nuevasLlamadas[index] = { ...editLlamada, agente: nuevasLlamadas[index].agente };
+
+    const empresaActualizada = {
+      ...selectedEmpresaData,
+      llamadas: nuevasLlamadas,
+    };
+
+    // Actualizar en Firebase
+    await setDoc(doc(db, "empresas", empresaActual), empresaActualizada);
+
+    // Actualizar estados locales
+    const nuevasEmpresas = data.map((e) =>
+      e.empresa === empresaActual ? empresaActualizada : e
+    );
+    setData(nuevasEmpresas);
+    setSelectedEmpresaData(empresaActualizada);
+    setEditandoIndex(null);
+  };
+
 
   const esFormularioValido = nuevoNombreEmpresa.trim() !== "" && nuevoEquipoEmpresa !== "";
 
@@ -437,17 +462,62 @@ export default function App() {
               <p className="mb-4">Llamadas realizadas: {selectedEmpresaData.llamadas.length}</p>
 
               {selectedEmpresaData.llamadas.length > 0 && (
-
-                <ul className="space-y-2 mb-4">
-                  <strong><u>Detalle de llamadas:</u></strong><br />
+                <ul className="space-y-4 mb-4">
                   {selectedEmpresaData.llamadas.map((l, i) => (
-                    <li key={i} className="border-b border-gray-600 pb-2 text-sm">
-                      <strong>{l.motivo}</strong>: {l.descripcion}<br />
-                      <span className="text-gray-400">Ticket: <a href={`https://soporte.flexxus.com.ar/tickets/${l.ticket}`} target="_blank" className="underline text-blue-400">{l.ticket}</a> | Agente: {l.agente}</span>
+                    <li key={i} className="border-b border-gray-600 pb-2 text-sm relative">
+                      {editandoIndex === i ? (
+                        <>
+                          <input
+                            type="text"
+                            value={editLlamada.motivo}
+                            onChange={(e) => setEditLlamada({ ...editLlamada, motivo: e.target.value })}
+                            className="w-full p-1 mb-1 rounded bg-gray-600 text-white"
+                            placeholder="Motivo"
+                          />
+                          <textarea
+                            rows="2"
+                            value={editLlamada.descripcion}
+                            onChange={(e) => setEditLlamada({ ...editLlamada, descripcion: e.target.value })}
+                            className="w-full p-1 mb-1 rounded bg-gray-600 text-white"
+                            placeholder="Descripción"
+                          />
+                          <input
+                            type="text"
+                            value={editLlamada.ticket}
+                            maxLength={6}
+                            onChange={(e) =>
+                              setEditLlamada({ ...editLlamada, ticket: e.target.value.replace(/[^0-9]/g, "") })
+                            }
+                            className="w-1/2 p-1 mb-2 rounded bg-gray-600 text-white"
+                            placeholder="Ticket"
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button onClick={() => setEditandoIndex(null)} className="bg-red-500 text-white px-2 py-1">Cancelar</Button>
+                            <Button onClick={() => guardarEdicion(i)} className="bg-green-500 text-white px-2 py-1">Guardar</Button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <strong>{l.motivo}</strong>: {l.descripcion}<br />
+                          <span className="text-gray-400">Ticket: <a href={`https://soporte.flexxus.com.ar/tickets/${l.ticket}`} target="_blank" className="underline text-blue-400">{l.ticket}</a> | Agente: {l.agente}</span>
+                          {l.agente === nombreUsuario && (
+                            <Pencil
+                              size={16}
+                              className="absolute top-0 right-0 cursor-pointer text-gray-300 hover:scale-110 transition-transform"
+                              title="Editar llamada"
+                              onClick={() => {
+                                setEditandoIndex(i);
+                                setEditLlamada(l);
+                              }}
+                            />
+                          )}
+                        </>
+                      )}
                     </li>
                   ))}
                 </ul>
               )}
+
 
               {selectedEmpresaData.llamadas.length < 5 && (
                 <div className="space-y-3">
