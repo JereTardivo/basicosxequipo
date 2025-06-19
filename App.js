@@ -1,4 +1,5 @@
 
+
 // IMPORTS
 import React, { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
@@ -26,7 +27,8 @@ export default function App() {
   });
   const [modalOpen, setModalOpen] = useState(false);
   const [formValues, setFormValues] = useState({ motivo: "", descripcion: "", ticket: "" });
-  const [selectedEmpresa, setSelectedEmpresa] = useState("");
+  const [selectedEmpresa, setSelectedEmpresa] = useState(null);
+  const [selectedEmpresaData, setSelectedEmpresaData] = useState(null);
   const [errors, setErrors] = useState({});
   const [loginModal, setLoginModal] = useState(false);
   const [login, setLogin] = useState({ user: "", pass: "" });
@@ -279,6 +281,15 @@ export default function App() {
     }
   };
 
+  const handleModalOpen = (empresa) => {
+    console.log("Abriendo modal para:", empresa);
+    const empresaData = data.find((e) => e.empresa === empresa);
+    setSelectedEmpresa(empresa);
+    setSelectedEmpresaData(empresaData);
+    setModalOpen(true);
+    setFormValues({ motivo: "", descripcion: "", ticket: "" });
+  };
+
 
   const esFormularioValido = nuevoNombreEmpresa.trim() !== "" && nuevoEquipoEmpresa !== "";
 
@@ -375,249 +386,177 @@ export default function App() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-start auto-rows-min grid-flow-dense">
+
         {filteredData.map((item, index) => {
-          const llamadasDisponibles = 5 - item.llamadas.length;
-          const bgColor = llamadasDisponibles === 0 ? "bg-red-400/20" : "bg-green-400/20";
+          const bgColor = item.llamadas.length >= 5 ? "bg-red-400/20" : "bg-green-400/20";
           return (
-
-            <Card key={index} className={`${bgColor} hover:shadow-xl hover:scale-105 transition-transform duration-300`}>
-              <div style={{ position: "relative" }}>
-                {isLogged && (
-                  <div style={{ position: "absolute", top: "8px", right: "8px", display: "flex", gap: "8px" }}>
-                    <button
-                      onClick={() => {
-                        setModalEditOpen(true);
-                        setEmpresaSeleccionada(item.empresa);
-                        setNuevoNombreEmpresa(item.empresa);
-                        setNuevoEquipoEmpresa(item.equipo);
-                      }}
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        cursor: "pointer",
-                        padding: 0
-                      }}
-                    >
-
-                    </button>
-                    <button
-                      onClick={() => {
-                        setModalDeleteOpen(true);
-                        setEmpresaSeleccionada(item.empresa);
-                      }}
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        cursor: "pointer",
-                        padding: 0
-                      }}
-                    >
-
-                    </button>
-                  </div>
-                )}
-
-                <CardContent className="p-6 relative pb-16">
-
-                  <h2 className="text-xl font-bold tracking-wide">{item.empresa}</h2>
-                  <p>Llamadas disponibles: {llamadasDisponibles}</p>
-                  <ul className="pl-4">
-                    {item.llamadas.map((llamada, i) => (
-                      <div key={i} className="pb-2">
-                        <li className="ml-4">
-                          <strong>{llamada.motivo}</strong>: {llamada.descripcion} (Ticket: <a href={`https://soporte.flexxus.com.ar/tickets/${llamada.ticket}`} target="_blank" className="text-blue-400 underline hover:text-blue-300">{llamada.ticket}</a>)
-                          <p className="text-xs text-gray-400">Cargado por: {llamada.agente}</p>
-                        </li>
-                        {i !== item.llamadas.length - 1 && <hr className="border-gray-600 my-2" />}
-                      </div>
-                    ))}
-                  </ul>
-
-                  {isLogged && (item.equipo === equipoFilter || equipoFilter === "") && item.llamadas.length < 5 && (
-                    <div className="absolute bottom-2 right-2">
-                      <span
-                        className="cursor-pointer"
-                        title="AGREGAR LLAMADA"
-                        onClick={() => handleAddLlamadaClick(item.empresa)}
-                      >
-                        <PhoneCall size={24} className="text-gray-200 hover:scale-110 transition-transform duration-200" />
-                      </span>
-                    </div>
-                  )}
-
-                  {isLogged && (nombreUsuario === "Flexxus" || item.equipo === equipoFilter) && (
-                    <div className="absolute top-2 right-2 flex items-center gap-2">
-                      <span
-                        className="cursor-pointer"
-                        title="EDITAR EMPRESA"
-                        onClick={() => handleEditEmpresa(item.empresa)}
-                      >
-                        <Pencil size={20} className="text-gray-200 hover:scale-110 transition-transform duration-200" />
-                      </span>
-                      <span
-                        className="cursor-pointer"
-                        title="ELIMINAR EMPRESA"
-                        onClick={() => handleDeleteEmpresa(item.empresa)}
-                      >
-                        <Trash2 size={20} className="text-gray-200 hover:scale-110 transition-transform duration-200" />
-                      </span>
-                    </div>
-                  )}
-
+            <div key={index} onClick={() => handleModalOpen(item.empresa)} className="cursor-pointer">
+              <Card className={`${bgColor} p-6 cursor-pointer`}>
+                <CardContent>
+                  <h2 className="text-xl font-bold">{item.empresa}</h2>
+                  <p>Llamadas Realizadas: {item.llamadas.length} </p>
                 </CardContent>
-
-              </div>
-            </Card>
-
+              </Card>
+            </div>
           );
         })}
+
       </div>
 
-      {modalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
-          <div className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 p-6 rounded-2xl-lg w-full max-w-md">
-            <h2 className="text-lg font-bold mb-4">Agregar llamada</h2>
+      {
+        modalOpen && selectedEmpresaData && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
+            <div className="bg-gray-700 p-6 rounded-xl max-w-lg w-full relative">
+              <button className="absolute top-2 right-3 text-white text-xl" onClick={() => setModalOpen(false)}>×</button>
+              <h2 className="text-2xl font-bold mb-2">{selectedEmpresaData.empresa}</h2>
+              <p className="mb-4">Llamadas realizadas: {selectedEmpresaData.llamadas.length}</p>
 
-            <label className="text-sm uppercase text-gray-400 text-gray-200 mb-1 block">Motivo</label>
-            <input type="text" placeholder="Motivo" value={formValues.motivo}
-              onChange={(e) => setFormValues({ ...formValues, motivo: e.target.value })}
-              className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full mb-1 p-2 rounded-2xl bg-gray-700 text-gray-200" />
-            {errors.motivo && <p className="text-red-400 text-sm uppercase text-gray-400 mb-2">{errors.motivo}</p>}
+              {selectedEmpresaData.llamadas.length > 0 && (
+                
+                <ul className="space-y-2 mb-4">
+                  <strong><u>Detalle de llamadas:</u></strong><br/>
+                  {selectedEmpresaData.llamadas.map((l, i) => (
+                    <li key={i} className="border-b border-gray-600 pb-2 text-sm">
+                      <strong>{l.motivo}</strong>: {l.descripcion}<br />
+                      <span className="text-gray-400">Ticket: <a href={`https://soporte.flexxus.com.ar/tickets/${l.ticket}`} target="_blank" className="underline text-blue-400">{l.ticket}</a> | Agente: {l.agente}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
-            <label className="text-sm uppercase text-gray-400 text-gray-200 mb-1 block">Descripción</label>
-            <textarea rows="3" placeholder="Descripción" value={formValues.descripcion}
-              onChange={(e) => setFormValues({ ...formValues, descripcion: e.target.value })}
-              className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full mb-1 p-2 rounded-2xl bg-gray-700 text-gray-200 resize-none" />
-            {errors.descripcion && <p className="text-red-400 text-sm uppercase text-gray-400 mb-2">{errors.descripcion}</p>}
-
-            <label className="text-sm uppercase text-gray-400 text-gray-200 mb-1 block">Ticket (6 dígitos)</label>
-            <input type="number" placeholder="123456" value={formValues.ticket}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 6);
-                setFormValues({ ...formValues, ticket: value });
-              }}
-              className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-1/2 mb-3 p-2 rounded-2xl bg-gray-700 text-gray-200" />
-            {errors.ticket && <p className="text-red-400 text-sm uppercase text-gray-400 mb-4">{errors.ticket}</p>}
-
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setModalOpen(false)} className="bg-red-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-red-600 focus:ring-2 focus:ring-red-400">
-                Cancelar
-              </button>
-              <button onClick={handleModalSubmit} className="bg-green-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-green-600 focus:ring-2 focus:ring-green-400">
-                Guardar
-              </button>
+              {selectedEmpresaData.llamadas.length < 5 && (
+                <div className="space-y-3">
+                  <strong><u>Nueva Llamada:</u></strong><br/>
+                  <input type="text" placeholder="Motivo" className="w-full p-2 rounded bg-gray-600 text-white" value={formValues.motivo} onChange={(e) => setFormValues({ ...formValues, motivo: e.target.value })} />
+                  <textarea placeholder="Descripción" className="w-full p-2 rounded bg-gray-600 text-white" rows="3" value={formValues.descripcion} onChange={(e) => setFormValues({ ...formValues, descripcion: e.target.value })} />
+                  <input type="text" placeholder="Ticket (6 dígitos)" className="w-full p-2 rounded bg-gray-600 text-white" maxLength={6} value={formValues.ticket} onChange={(e) => setFormValues({ ...formValues, ticket: e.target.value.replace(/[^0-9]/g, "") })} />
+                  {Object.values(errors).map((err, i) => (<p key={i} className="text-red-400 text-sm">{err}</p>))}
+                  <div className="flex justify-end gap-2">
+                    <Button onClick={() => setModalOpen(false)} className="bg-red-500 text-white">Cancelar</Button>
+                    <Button onClick={handleModalSubmit} className="bg-green-500 text-white">Guardar</Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-      {loginModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
-          <div className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 p-6 rounded-2xl-lg w-full max-w-sm">
-            <h2 className="text-lg font-bold mb-4">Iniciar sesión</h2>
-            <input type="text" placeholder="Usuario" value={login.user}
-              onChange={(e) => setLogin({ ...login, user: e.target.value })}
-              className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full mb-3 p-2 rounded-2xl bg-gray-700 text-gray-200" />
-            <input type="password" placeholder="Contraseña" value={login.pass}
-              onChange={(e) => setLogin({ ...login, pass: e.target.value })}
-              className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full mb-3 p-2 rounded-2xl bg-gray-700 text-gray-200" />
-            {loginError && <p className="text-red-400 text-sm uppercase text-gray-400 mb-2">{loginError}</p>}
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setLoginModal(false)} className="bg-red-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-red-600 focus:ring-2 focus:ring-red-400">
-                Cancelar
-              </button>
-              <button onClick={handleLogin} className="bg-green-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-green-600 focus:ring-2 focus:ring-green-400">
-                Entrar
-              </button>
+      {
+        loginModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
+            <div className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 p-6 rounded-2xl-lg w-full max-w-sm">
+              <h2 className="text-lg font-bold mb-4">Iniciar sesión</h2>
+              <input type="text" placeholder="Usuario" value={login.user}
+                onChange={(e) => setLogin({ ...login, user: e.target.value })}
+                className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full mb-3 p-2 rounded-2xl bg-gray-700 text-gray-200" />
+              <input type="password" placeholder="Contraseña" value={login.pass}
+                onChange={(e) => setLogin({ ...login, pass: e.target.value })}
+                className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full mb-3 p-2 rounded-2xl bg-gray-700 text-gray-200" />
+              {loginError && <p className="text-red-400 text-sm uppercase text-gray-400 mb-2">{loginError}</p>}
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setLoginModal(false)} className="bg-red-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+                  Cancelar
+                </button>
+                <button onClick={handleLogin} className="bg-green-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-green-600 focus:ring-2 focus:ring-green-400">
+                  Entrar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* MODAL NUEVA EMPRESA */}
-      {modalAddOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
-          <div className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 p-6 rounded-2xl-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Agregar nueva empresa</h2>
-            <input
-              type="text"
-              value={nuevoNombreEmpresa}
-              onChange={(e) => setNuevoNombreEmpresa(e.target.value)}
-              placeholder="Nombre de la empresa"
-              className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full p-2 rounded-2xl bg-gray-700 text-gray-200 mb-4"
-            />
-            {nombreUsuario === "Flexxus" ? (
-              <select
-                value={nuevoEquipoEmpresa}
-                onChange={(e) => setNuevoEquipoEmpresa(e.target.value)}
+      {
+        modalAddOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
+            <div className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 p-6 rounded-2xl-lg w-full max-w-md">
+              <h2 className="text-xl font-bold mb-4">Agregar nueva empresa</h2>
+              <input
+                type="text"
+                value={nuevoNombreEmpresa}
+                onChange={(e) => setNuevoNombreEmpresa(e.target.value)}
+                placeholder="Nombre de la empresa"
                 className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full p-2 rounded-2xl bg-gray-700 text-gray-200 mb-4"
-              >
-                <option value="">Seleccionar equipo</option>
-                <option value="Equipo 1">Equipo 1</option>
-                <option value="Equipo 2">Equipo 2</option>
-                <option value="Equipo 3">Equipo 3</option>
-                <option value="Equipo 4">Equipo 4</option>
-                <option value="Equipo 5">Equipo 5</option>
-                <option value="Equipo Corralon">Equipo Corralon</option>
-              </select>
-            ) : (
-              <select
-                value={nuevoEquipoEmpresa}
-                disabled
-                className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full p-2 rounded-2xl bg-gray-700 text-gray-200 mb-4 opacity-60 cursor-not-allowed"
-              >
-                <option value={nombreUsuario}>{nombreUsuario}</option>
-              </select>
-            )}
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setModalAddOpen(false)} className="bg-red-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-red-600 focus:ring-2 focus:ring-red-400">Cancelar</button>
-              <button
-                onClick={confirmAddEmpresa}
-                disabled={!esFormularioValido}
-                className={`px-4 py-2 rounded-2xl text-gray-200 ${esFormularioValido
-                  ? "bg-green-500 hover:bg-green-600 focus:ring-2 focus:ring-green-400"
-                  : "bg-green-500 opacity-50 cursor-not-allowed"
-                  }`}
-              >
-                Agregar
-              </button>
+              />
+              {nombreUsuario === "Flexxus" ? (
+                <select
+                  value={nuevoEquipoEmpresa}
+                  onChange={(e) => setNuevoEquipoEmpresa(e.target.value)}
+                  className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full p-2 rounded-2xl bg-gray-700 text-gray-200 mb-4"
+                >
+                  <option value="">Seleccionar equipo</option>
+                  <option value="Equipo 1">Equipo 1</option>
+                  <option value="Equipo 2">Equipo 2</option>
+                  <option value="Equipo 3">Equipo 3</option>
+                  <option value="Equipo 4">Equipo 4</option>
+                  <option value="Equipo 5">Equipo 5</option>
+                  <option value="Equipo Corralon">Equipo Corralon</option>
+                </select>
+              ) : (
+                <select
+                  value={nuevoEquipoEmpresa}
+                  disabled
+                  className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full p-2 rounded-2xl bg-gray-700 text-gray-200 mb-4 opacity-60 cursor-not-allowed"
+                >
+                  <option value={nombreUsuario}>{nombreUsuario}</option>
+                </select>
+              )}
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setModalAddOpen(false)} className="bg-red-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-red-600 focus:ring-2 focus:ring-red-400">Cancelar</button>
+                <button
+                  onClick={confirmAddEmpresa}
+                  disabled={!esFormularioValido}
+                  className={`px-4 py-2 rounded-2xl text-gray-200 ${esFormularioValido
+                    ? "bg-green-500 hover:bg-green-600 focus:ring-2 focus:ring-green-400"
+                    : "bg-green-500 opacity-50 cursor-not-allowed"
+                    }`}
+                >
+                  Agregar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* MODAL EDITAR EMPRESA */}
-      {modalEditOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
-          <div className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 p-6 rounded-2xl-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Editar nombre de empresa</h2>
-            <input
-              type="text"
-              value={nuevoNombreEmpresa}
-              onChange={(e) => setNuevoNombreEmpresa(e.target.value)}
-              className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full p-2 rounded-2xl bg-gray-700 text-gray-200 mb-4"
-            />
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setModalEditOpen(false)} className="bg-red-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-red-600 focus:ring-2 focus:ring-red-400">Cancelar</button>
-              <button onClick={confirmEditEmpresa} className="bg-yellow-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-yellow-600">Guardar</button>
+      {
+        modalEditOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
+            <div className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 p-6 rounded-2xl-lg w-full max-w-md">
+              <h2 className="text-xl font-bold mb-4">Editar nombre de empresa</h2>
+              <input
+                type="text"
+                value={nuevoNombreEmpresa}
+                onChange={(e) => setNuevoNombreEmpresa(e.target.value)}
+                className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full p-2 rounded-2xl bg-gray-700 text-gray-200 mb-4"
+              />
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setModalEditOpen(false)} className="bg-red-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-red-600 focus:ring-2 focus:ring-red-400">Cancelar</button>
+                <button onClick={confirmEditEmpresa} className="bg-yellow-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-yellow-600">Guardar</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* MODAL ELIMINAR EMPRESA */}
-      {modalDeleteOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
-          <div className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 p-6 rounded-2xl-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4 text-red-400">Eliminar empresa</h2>
-            <p className="text-gray-200 mb-6">¿Estás seguro de que querés eliminar "{empresaSeleccionada}"?</p>
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setModalDeleteOpen(false)} className="bg-gray-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-gray-600">Cancelar</button>
-              <button onClick={confirmDeleteEmpresa} className="bg-red-600 text-gray-200 px-4 py-2 rounded-2xl hover:bg-red-700">Eliminar</button>
+      {
+        modalDeleteOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
+            <div className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 p-6 rounded-2xl-lg w-full max-w-md">
+              <h2 className="text-xl font-bold mb-4 text-red-400">Eliminar empresa</h2>
+              <p className="text-gray-200 mb-6">¿Estás seguro de que querés eliminar "{empresaSeleccionada}"?</p>
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setModalDeleteOpen(false)} className="bg-gray-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-gray-600">Cancelar</button>
+                <button onClick={confirmDeleteEmpresa} className="bg-red-600 text-gray-200 px-4 py-2 rounded-2xl hover:bg-red-700">Eliminar</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
     </div>
 
