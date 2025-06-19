@@ -9,6 +9,7 @@ import {
   setDoc,
   doc,
   deleteDoc,
+  getDoc
 } from "firebase/firestore";
 import { Pencil, Trash2, PhoneCall, FileSpreadsheet, LogIn, LogOut, Building, Users } from "lucide-react";
 import { Card, CardContent } from "./components/ui/card";
@@ -38,15 +39,7 @@ export default function App() {
   const [empresaSeleccionada, setEmpresaSeleccionada] = useState("");
   const [nuevoNombreEmpresa, setNuevoNombreEmpresa] = useState("");
   const [nuevoEquipoEmpresa, setNuevoEquipoEmpresa] = useState("");
-
-  const credencialesEquipos = {
-    "equipo1": { pass: "eq1bx2025", equipo: "Equipo 1" },
-    "equipo2": { pass: "eq2bx2025", equipo: "Equipo 2" },
-    "equipo3": { pass: "eq3bx2025", equipo: "Equipo 3" },
-    "equipo4": { pass: "eq4bx2025", equipo: "Equipo 4" },
-    "equipo5": { pass: "eq5bx2025", equipo: "Equipo 5" },
-    "equipo-corralon": { pass: "corralon25", equipo: "Equipo Corralon" },
-  };
+  const [isFlexxus, setIsFlexxus] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -80,14 +73,6 @@ export default function App() {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("equipoSeleccionado", equipoFilter);
-      localStorage.setItem("isLogged", isLogged);
-      localStorage.setItem("nombreUsuario", nombreUsuario);
-    }
-  }, [equipoFilter, isLogged]);
-
   const handleLogout = () => {
     setIsLogged(false);
     setEquipoFilter("");
@@ -96,29 +81,29 @@ export default function App() {
     localStorage.removeItem("equipoSeleccionado");
   };
 
-  const handleLogin = () => {
-    const usuarioIngresado = login.user.trim().toLowerCase();
-    const claveIngresada = login.pass.trim();
+  const handleLogin = async () => {
+    try {
+      const docRef = doc(db, "usuarios", login.user.toLowerCase());
+      const docSnap = await getDoc(docRef);
 
-    if (usuarioIngresado === "flexxus" && claveIngresada === "1926") {
-      setIsLogged(true);
-      setLoginModal(false);
-      setLoginError("");
-      setEquipoFilter("");
-      setNombreUsuario("");
-      setNombreUsuario("Flexxus");
-    } else if (
-      credencialesEquipos[usuarioIngresado] &&
-      credencialesEquipos[usuarioIngresado].pass === claveIngresada
-    ) {
-      setIsLogged(true);
-      setLoginModal(false);
-      setLoginError("");
-      const equipoNombre = credencialesEquipos[usuarioIngresado].equipo;
-      setEquipoFilter(equipoNombre);
-      setNombreUsuario(equipoNombre);
-    } else {
-      setLoginError("Usuario o contraseña incorrectos");
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.password === login.pass) {
+          setIsLogged(true);
+          setNombreUsuario(data.usuario);
+          setEquipoFilter(data.equipo || "");
+          setIsFlexxus(!data.equipo);
+          setLoginError("");
+          setLoginModal(false);
+        } else {
+          setLoginError("Contraseña incorrecta.");
+        }
+      } else {
+        setLoginError("Usuario no encontrado.");
+      }
+    } catch (error) {
+      console.error("Error en login:", error);
+      setLoginError("Error al intentar iniciar sesión.");
     }
   };
 
@@ -162,6 +147,7 @@ export default function App() {
     setModalOpen(true);
   };
 
+
   const handleModalSubmit = async () => {
     const newErrors = {};
     if (!formValues.motivo || formValues.motivo.length > 50) {
@@ -170,7 +156,7 @@ export default function App() {
     if (!formValues.descripcion || formValues.descripcion.length > 250) {
       newErrors.descripcion = "Máx. 250 caracteres alfanuméricos";
     }
-    if (!/^\d{6}$/.test(formValues.ticket)) {
+    if (!/\d{6}/.test(formValues.ticket)) {
       newErrors.ticket = "Ticket debe tener 6 dígitos numéricos";
     }
 
@@ -181,7 +167,7 @@ export default function App() {
 
     const updated = data.map((item) => {
       if (item.empresa === selectedEmpresa && item.llamadas.length < 5) {
-        const nuevas = [...item.llamadas, { ...formValues }];
+        const nuevas = [...item.llamadas, { ...formValues, agente: nombreUsuario }];
         const updatedItem = { ...item, llamadas: nuevas };
         const docId = item.empresa;
         setDoc(doc(db, "empresas", docId), updatedItem);
@@ -357,9 +343,8 @@ export default function App() {
             <select
               value={equipoFilter}
               onChange={(e) => setEquipoFilter(e.target.value)}
-              disabled={nombreUsuario !== "Flexxus"} // ← deshabilita si no es Flexxus
-              className={`bg-gray-700 text-gray-200 border-none p-2 w-full appearance-none ${nombreUsuario !== "Flexxus" ? "opacity-60 cursor-not-allowed" : ""
-                }`}
+              disabled={!isFlexxus} // ← deshabilita si no es Flexxus
+              className={`bg-gray-700 text-gray-200 border-none p-2 w-full appearance-none ${!isFlexxus ? "opacity-60 cursor-not-allowed" : ""}`}
             >
               <option value="">Todos los equipos</option>
               <option value="Equipo 1">Equipo 1</option>
@@ -389,7 +374,7 @@ export default function App() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 items-start auto-rows-min grid-flow-dense">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-start auto-rows-min grid-flow-dense">
         {filteredData.map((item, index) => {
           const llamadasDisponibles = 5 - item.llamadas.length;
           const bgColor = llamadasDisponibles === 0 ? "bg-red-400/20" : "bg-green-400/20";
