@@ -32,7 +32,6 @@ export default function App() {
   const [loginError, setLoginError] = useState("");
   const [isLogged, setIsLogged] = useState(false);
   const [nombreUsuario, setNombreUsuario] = useState("");
-
   const [modalAddOpen, setModalAddOpen] = useState(false);
   const [modalEditOpen, setModalEditOpen] = useState(false);
   const [modalDeleteOpen, setModalDeleteOpen] = useState(false);
@@ -296,6 +295,39 @@ export default function App() {
 
 
   const esFormularioValido = nuevoNombreEmpresa.trim() !== "" && nuevoEquipoEmpresa !== "";
+
+
+  if (!isLogged) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center px-4">
+        <div className="max-w-sm w-full bg-gray-800 p-6 rounded-2xl shadow-lg text-center">
+          <img src="/logo.png" alt="Flexxus Logo" className="w-40 mx-auto mb-4" />
+          <h1 className="text-xl font-bold mb-4">Gestión de Llamadas a Clientes con Soporte Básico</h1>
+          <input
+            type="text"
+            placeholder="Usuario"
+            value={login.user}
+            onChange={(e) => setLogin({ ...login, user: e.target.value })}
+            className="w-full mb-3 p-2 rounded bg-gray-700 text-white border border-gray-600"
+          />
+          <input
+            type="password"
+            placeholder="Contraseña"
+            value={login.pass}
+            onChange={(e) => setLogin({ ...login, pass: e.target.value })}
+            className="w-full mb-3 p-2 rounded bg-gray-700 text-white border border-gray-600"
+          />
+          {loginError && <p className="text-red-500 mb-3">{loginError}</p>}
+          <button
+            onClick={handleLogin}
+            className="bg-green-600 hover:bg-green-700 text-white w-full py-2 rounded"
+          >
+            Entrar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-800 to-gray-900 text-gray-200 p-4">
