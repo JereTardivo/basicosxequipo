@@ -392,9 +392,34 @@ export default function App() {
           return (
             <div key={index} onClick={() => handleModalOpen(item.empresa)} className="cursor-pointer">
               <Card className={`${bgColor} p-6 cursor-pointer`}>
-                <CardContent>
+                <CardContent className="relative">
                   <h2 className="text-xl font-bold">{item.empresa}</h2>
                   <p>Llamadas Realizadas: {item.llamadas.length} </p>
+
+                  {isLogged && (nombreUsuario === "Flexxus") && (
+                    <div className="absolute top-2 right-2 flex items-center gap-2">
+                      <span
+                        className="cursor-pointer"
+                        title="EDITAR EMPRESA"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditEmpresa(item.empresa)
+                        }}
+                      >
+                        <Pencil size={20} className="text-gray-200 hover:scale-110 transition-transform duration-200" />
+                      </span>
+                      <span
+                        className="cursor-pointer"
+                        title="ELIMINAR EMPRESA"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteEmpresa(item.empresa)
+                        }}
+                      >
+                        <Trash2 size={20} className="text-gray-200 hover:scale-110 transition-transform duration-200" />
+                      </span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -412,9 +437,9 @@ export default function App() {
               <p className="mb-4">Llamadas realizadas: {selectedEmpresaData.llamadas.length}</p>
 
               {selectedEmpresaData.llamadas.length > 0 && (
-                
+
                 <ul className="space-y-2 mb-4">
-                  <strong><u>Detalle de llamadas:</u></strong><br/>
+                  <strong><u>Detalle de llamadas:</u></strong><br />
                   {selectedEmpresaData.llamadas.map((l, i) => (
                     <li key={i} className="border-b border-gray-600 pb-2 text-sm">
                       <strong>{l.motivo}</strong>: {l.descripcion}<br />
@@ -426,7 +451,7 @@ export default function App() {
 
               {selectedEmpresaData.llamadas.length < 5 && (
                 <div className="space-y-3">
-                  <strong><u>Nueva Llamada:</u></strong><br/>
+                  <strong><u>Nueva Llamada:</u></strong><br />
                   <input type="text" placeholder="Motivo" className="w-full p-2 rounded bg-gray-600 text-white" value={formValues.motivo} onChange={(e) => setFormValues({ ...formValues, motivo: e.target.value })} />
                   <textarea placeholder="Descripción" className="w-full p-2 rounded bg-gray-600 text-white" rows="3" value={formValues.descripcion} onChange={(e) => setFormValues({ ...formValues, descripcion: e.target.value })} />
                   <input type="text" placeholder="Ticket (6 dígitos)" className="w-full p-2 rounded bg-gray-600 text-white" maxLength={6} value={formValues.ticket} onChange={(e) => setFormValues({ ...formValues, ticket: e.target.value.replace(/[^0-9]/g, "") })} />
