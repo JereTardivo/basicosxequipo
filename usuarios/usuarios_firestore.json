@@ -1,0 +1,600 @@
+{
+  "gabrielazurita": {
+    "fields": {
+      "usuario": {
+        "stringValue": "gabrielazurita"
+      },
+      "password": {
+        "stringValue": "bx2025gab"
+      },
+      "equipo": {
+        "stringValue": "Equipo 1"
+      }
+    }
+  },
+  "manuelmoyano": {
+    "fields": {
+      "usuario": {
+        "stringValue": "manuelmoyano"
+      },
+      "password": {
+        "stringValue": "bx2025man"
+      },
+      "equipo": {
+        "stringValue": "Equipo 1"
+      }
+    }
+  },
+  "alejandrogomez": {
+    "fields": {
+      "usuario": {
+        "stringValue": "alejandrogomez"
+      },
+      "password": {
+        "stringValue": "bx2025ale"
+      },
+      "equipo": {
+        "stringValue": "Equipo 1"
+      }
+    }
+  },
+  "sergiorodrigodiaz": {
+    "fields": {
+      "usuario": {
+        "stringValue": "sergiorodrigodiaz"
+      },
+      "password": {
+        "stringValue": "bx2025ser"
+      },
+      "equipo": {
+        "stringValue": "Equipo 1"
+      }
+    }
+  },
+  "facundozaracho": {
+    "fields": {
+      "usuario": {
+        "stringValue": "facundozaracho"
+      },
+      "password": {
+        "stringValue": "bx2025fac"
+      },
+      "equipo": {
+        "stringValue": "Equipo 1"
+      }
+    }
+  },
+  "alanabella": {
+    "fields": {
+      "usuario": {
+        "stringValue": "alanabella"
+      },
+      "password": {
+        "stringValue": "bx2025ala"
+      },
+      "equipo": {
+        "stringValue": "Equipo 1"
+      }
+    }
+  },
+  "juanrico": {
+    "fields": {
+      "usuario": {
+        "stringValue": "juanrico"
+      },
+      "password": {
+        "stringValue": "bx2025jua"
+      },
+      "equipo": {
+        "stringValue": "Equipo 1"
+      }
+    }
+  },
+  "maximilianorodriguez": {
+    "fields": {
+      "usuario": {
+        "stringValue": "maximilianorodriguez"
+      },
+      "password": {
+        "stringValue": "bx2025max"
+      },
+      "equipo": {
+        "stringValue": "Equipo 1"
+      }
+    }
+  },
+  "franciscopicone": {
+    "fields": {
+      "usuario": {
+        "stringValue": "franciscopicone"
+      },
+      "password": {
+        "stringValue": "bx2025fra"
+      },
+      "equipo": {
+        "stringValue": "Equipo 2"
+      }
+    }
+  },
+  "nairabruzzoni": {
+    "fields": {
+      "usuario": {
+        "stringValue": "nairabruzzoni"
+      },
+      "password": {
+        "stringValue": "bx2025nai"
+      },
+      "equipo": {
+        "stringValue": "Equipo 2"
+      }
+    }
+  },
+  "barbarabresan": {
+    "fields": {
+      "usuario": {
+        "stringValue": "barbarabresan"
+      },
+      "password": {
+        "stringValue": "bx2025bar"
+      },
+      "equipo": {
+        "stringValue": "Equipo 2"
+      }
+    }
+  },
+  "cristianugarte": {
+    "fields": {
+      "usuario": {
+        "stringValue": "cristianugarte"
+      },
+      "password": {
+        "stringValue": "bx2025cri"
+      },
+      "equipo": {
+        "stringValue": "Equipo 2"
+      }
+    }
+  },
+  "juanpablorodas": {
+    "fields": {
+      "usuario": {
+        "stringValue": "juanpablorodas"
+      },
+      "password": {
+        "stringValue": "bx2025jua"
+      },
+      "equipo": {
+        "stringValue": "Equipo 2"
+      }
+    }
+  },
+  "dannygomez": {
+    "fields": {
+      "usuario": {
+        "stringValue": "dannygomez"
+      },
+      "password": {
+        "stringValue": "bx2025dan"
+      },
+      "equipo": {
+        "stringValue": "Equipo 2"
+      }
+    }
+  },
+  "jeremiastardivo": {
+    "fields": {
+      "usuario": {
+        "stringValue": "jeremiastardivo"
+      },
+      "password": {
+        "stringValue": "bx2025jer"
+      },
+      "equipo": {
+        "stringValue": "Equipo 3"
+      }
+    }
+  },
+  "agustinmasanti": {
+    "fields": {
+      "usuario": {
+        "stringValue": "agustinmasanti"
+      },
+      "password": {
+        "stringValue": "bx2025agu"
+      },
+      "equipo": {
+        "stringValue": "Equipo 3"
+      }
+    }
+  },
+  "gonzaloacevedo": {
+    "fields": {
+      "usuario": {
+        "stringValue": "gonzaloacevedo"
+      },
+      "password": {
+        "stringValue": "bx2025gon"
+      },
+      "equipo": {
+        "stringValue": "Equipo 3"
+      }
+    }
+  },
+  "juancastro": {
+    "fields": {
+      "usuario": {
+        "stringValue": "juancastro"
+      },
+      "password": {
+        "stringValue": "bx2025jua"
+      },
+      "equipo": {
+        "stringValue": "Equipo 3"
+      }
+    }
+  },
+  "benjamindegiorgi": {
+    "fields": {
+      "usuario": {
+        "stringValue": "benjamindegiorgi"
+      },
+      "password": {
+        "stringValue": "bx2025ben"
+      },
+      "equipo": {
+        "stringValue": "Equipo 3"
+      }
+    }
+  },
+  "ignaciotulian": {
+    "fields": {
+      "usuario": {
+        "stringValue": "ignaciotulian"
+      },
+      "password": {
+        "stringValue": "bx2025ign"
+      },
+      "equipo": {
+        "stringValue": "Equipo 3"
+      }
+    }
+  },
+  "agustingiuliani": {
+    "fields": {
+      "usuario": {
+        "stringValue": "agustingiuliani"
+      },
+      "password": {
+        "stringValue": "bx2025agu"
+      },
+      "equipo": {
+        "stringValue": "Equipo 3"
+      }
+    }
+  },
+  "juancruzavila": {
+    "fields": {
+      "usuario": {
+        "stringValue": "juancruzavila"
+      },
+      "password": {
+        "stringValue": "bx2025jua"
+      },
+      "equipo": {
+        "stringValue": "Equipo 3"
+      }
+    }
+  },
+  "miltoncanal": {
+    "fields": {
+      "usuario": {
+        "stringValue": "miltoncanal"
+      },
+      "password": {
+        "stringValue": "bx2025mil"
+      },
+      "equipo": {
+        "stringValue": "Equipo 4"
+      }
+    }
+  },
+  "ignaciocasas": {
+    "fields": {
+      "usuario": {
+        "stringValue": "ignaciocasas"
+      },
+      "password": {
+        "stringValue": "bx2025ign"
+      },
+      "equipo": {
+        "stringValue": "Equipo 4"
+      }
+    }
+  },
+  "ericandrada": {
+    "fields": {
+      "usuario": {
+        "stringValue": "ericandrada"
+      },
+      "password": {
+        "stringValue": "bx2025eri"
+      },
+      "equipo": {
+        "stringValue": "Equipo 4"
+      }
+    }
+  },
+  "paolacasalino": {
+    "fields": {
+      "usuario": {
+        "stringValue": "paolacasalino"
+      },
+      "password": {
+        "stringValue": "bx2025pao"
+      },
+      "equipo": {
+        "stringValue": "Equipo 4"
+      }
+    }
+  },
+  "nataliasalas": {
+    "fields": {
+      "usuario": {
+        "stringValue": "nataliasalas"
+      },
+      "password": {
+        "stringValue": "bx2025nat"
+      },
+      "equipo": {
+        "stringValue": "Equipo 4"
+      }
+    }
+  },
+  "francojosegiglio": {
+    "fields": {
+      "usuario": {
+        "stringValue": "francojosegiglio"
+      },
+      "password": {
+        "stringValue": "bx2025fra"
+      },
+      "equipo": {
+        "stringValue": "Equipo 4"
+      }
+    }
+  },
+  "brendafernandez": {
+    "fields": {
+      "usuario": {
+        "stringValue": "brendafernandez"
+      },
+      "password": {
+        "stringValue": "bx2025bre"
+      },
+      "equipo": {
+        "stringValue": "Equipo 4"
+      }
+    }
+  },
+  "alexisvarela": {
+    "fields": {
+      "usuario": {
+        "stringValue": "alexisvarela"
+      },
+      "password": {
+        "stringValue": "bx2025ale"
+      },
+      "equipo": {
+        "stringValue": "Equipo 4"
+      }
+    }
+  },
+  "gonzaloandines": {
+    "fields": {
+      "usuario": {
+        "stringValue": "gonzaloandines"
+      },
+      "password": {
+        "stringValue": "bx2025gon"
+      },
+      "equipo": {
+        "stringValue": "Equipo 5"
+      }
+    }
+  },
+  "gastonhruby": {
+    "fields": {
+      "usuario": {
+        "stringValue": "gastonhruby"
+      },
+      "password": {
+        "stringValue": "bx2025gas"
+      },
+      "equipo": {
+        "stringValue": "Equipo 5"
+      }
+    }
+  },
+  "martinmelendez": {
+    "fields": {
+      "usuario": {
+        "stringValue": "martinmelendez"
+      },
+      "password": {
+        "stringValue": "bx2025mar"
+      },
+      "equipo": {
+        "stringValue": "Equipo 5"
+      }
+    }
+  },
+  "rodrigorosello": {
+    "fields": {
+      "usuario": {
+        "stringValue": "rodrigorosello"
+      },
+      "password": {
+        "stringValue": "bx2025rod"
+      },
+      "equipo": {
+        "stringValue": "Equipo 5"
+      }
+    }
+  },
+  "karenarteaga": {
+    "fields": {
+      "usuario": {
+        "stringValue": "karenarteaga"
+      },
+      "password": {
+        "stringValue": "bx2025kar"
+      },
+      "equipo": {
+        "stringValue": "Equipo 5"
+      }
+    }
+  },
+  "carolmanzoli": {
+    "fields": {
+      "usuario": {
+        "stringValue": "carolmanzoli"
+      },
+      "password": {
+        "stringValue": "bx2025car"
+      },
+      "equipo": {
+        "stringValue": "Equipo 5"
+      }
+    }
+  },
+  "agust\u00ednramallo": {
+    "fields": {
+      "usuario": {
+        "stringValue": "agust\u00ednramallo"
+      },
+      "password": {
+        "stringValue": "bx2025agu"
+      },
+      "equipo": {
+        "stringValue": "Equipo 5"
+      }
+    }
+  },
+  "valentinaluna": {
+    "fields": {
+      "usuario": {
+        "stringValue": "valentinaluna"
+      },
+      "password": {
+        "stringValue": "bx2025val"
+      },
+      "equipo": {
+        "stringValue": "Equipo 5"
+      }
+    }
+  },
+  "karinabarzola": {
+    "fields": {
+      "usuario": {
+        "stringValue": "karinabarzola"
+      },
+      "password": {
+        "stringValue": "bx2025kar"
+      },
+      "equipo": {
+        "stringValue": "Equipo Corralon"
+      }
+    }
+  },
+  "alejandroorellano": {
+    "fields": {
+      "usuario": {
+        "stringValue": "alejandroorellano"
+      },
+      "password": {
+        "stringValue": "bx2025ale"
+      },
+      "equipo": {
+        "stringValue": "Equipo Corralon"
+      }
+    }
+  },
+  "elizabethorellano": {
+    "fields": {
+      "usuario": {
+        "stringValue": "elizabethorellano"
+      },
+      "password": {
+        "stringValue": "bx2025eli"
+      },
+      "equipo": {
+        "stringValue": "Equipo Corralon"
+      }
+    }
+  },
+  "deborasilva": {
+    "fields": {
+      "usuario": {
+        "stringValue": "deborasilva"
+      },
+      "password": {
+        "stringValue": "bx2025deb"
+      },
+      "equipo": {
+        "stringValue": "Equipo Corralon"
+      }
+    }
+  },
+  "ignaciococca": {
+    "fields": {
+      "usuario": {
+        "stringValue": "ignaciococca"
+      },
+      "password": {
+        "stringValue": "bx2025ign"
+      },
+      "equipo": {
+        "stringValue": "Equipo Corralon"
+      }
+    }
+  },
+  "lucianalepore": {
+    "fields": {
+      "usuario": {
+        "stringValue": "lucianalepore"
+      },
+      "password": {
+        "stringValue": "bx2025luc"
+      },
+      "equipo": {
+        "stringValue": "Equipo Corralon"
+      }
+    }
+  },
+  "benjamintaddeocordoba": {
+    "fields": {
+      "usuario": {
+        "stringValue": "benjamintaddeocordoba"
+      },
+      "password": {
+        "stringValue": "bx2025ben"
+      },
+      "equipo": {
+        "stringValue": "Equipo Corralon"
+      }
+    }
+  },
+  "marcosgulli": {
+    "fields": {
+      "usuario": {
+        "stringValue": "marcosgulli"
+      },
+      "password": {
+        "stringValue": "bx2025mar"
+      },
+      "equipo": {
+        "stringValue": "Equipo Corralon"
+      }
+    }
+  }
+}

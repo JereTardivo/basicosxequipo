@@ -1,7 +1,0 @@
-Equipo			Usuario			Contraseña
-Equipo 1		equipo1			eq1bx2025
-Equipo 2		equipo2			eq2bx2025
-Equipo 3		equipo3			eq3bx2025
-Equipo 4		equipo4			eq4bx2025
-Equipo 5		equipo5			eq5bx2025
-Equipo Corralon		equipo-corralon		corralon25
