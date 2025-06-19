@@ -302,7 +302,8 @@ export default function App() {
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center px-4">
         <div className="max-w-sm w-full bg-gray-800 p-6 rounded-2xl shadow-lg text-center">
           <img src="/logo.png" alt="Flexxus Logo" className="w-40 mx-auto mb-4" />
-          <h1 className="text-xl font-bold mb-4">Gestión de Llamadas a Clientes con Soporte Básico</h1>
+          <h1 className="text-xl font-bold mb-1">Gestión de Llamadas</h1> 
+          <h1 className="text-xl font-bold mb-4">Clientes con Soporte Básico</h1>
           <input
             type="text"
             placeholder="Usuario"
