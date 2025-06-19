@@ -409,9 +409,25 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-800 to-gray-900 text-gray-200 p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-center w-full">Gestión de Llamadas a Clientes con Soporte Básico</h1>
-        <div className="absolute top-4 right-4 flex gap-3 items-center">
+
+      <div className="relative flex items-center justify-center mb-10">
+        {/* Logo alineado a la izquierda */}
+        <div className="absolute left-0">
+          <img
+            src="/logo.png"
+            alt="Logo Flexxus"
+            className="h-10"
+            title="Flexxus"
+          />
+        </div>
+
+        {/* Título verdaderamente centrado */}
+        <h1 className="text-2xl font-bold text-center">
+          Gestión de Llamadas a Clientes con Soporte Básico
+        </h1>
+
+        {/* Usuario e íconos a la derecha */}
+        <div className="absolute right-0 flex gap-3 items-center">
           {nombreUsuario && (
             <div className="flex items-center gap-2 mr-2">
               <span className="text-gray-200 font-semibold">{nombreUsuario}</span>
@@ -428,13 +444,20 @@ export default function App() {
             </div>
           )}
           {isLogged ? (
-            <LogOut className="text-red-400 cursor-pointer hover:text-red-600" size={28} onClick={handleLogout} />
+            <LogOut
+              className="text-red-400 cursor-pointer hover:text-red-600"
+              size={28}
+              onClick={handleLogout}
+            />
           ) : (
-            <LogIn className="text-green-400 cursor-pointer hover:text-green-600" size={28} onClick={() => setLoginModal(true)} />
+            <LogIn
+              className="text-green-400 cursor-pointer hover:text-green-600"
+              size={28}
+              onClick={() => setLoginModal(true)}
+            />
           )}
         </div>
       </div>
-
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
           <div className="flex items-center bg-gray-700 border border-gray-600 rounded-2xl-md px-2">
@@ -549,6 +572,7 @@ export default function App() {
                     <li key={i} className="border-b border-gray-600 pb-2 text-sm relative">
                       {editandoIndex === i ? (
                         <>
+                        <p className="text-sm text-gray-300 mb-1">Motivo</p>
                           <input
                             type="text"
                             value={editLlamada.motivo}
@@ -556,6 +580,7 @@ export default function App() {
                             className="w-full p-1 mb-1 rounded bg-gray-600 text-white"
                             placeholder="Motivo"
                           />
+                          <p className="text-sm text-gray-300 mb-1">Descripción</p>
                           <textarea
                             rows="2"
                             value={editLlamada.descripcion}
@@ -563,6 +588,7 @@ export default function App() {
                             className="w-full p-1 mb-1 rounded bg-gray-600 text-white"
                             placeholder="Descripción"
                           />
+                          <p className="text-sm text-gray-300 mb-1">Ticket</p>
                           <input
                             type="text"
                             value={editLlamada.ticket}
@@ -582,7 +608,7 @@ export default function App() {
                         <>
                           <strong>{l.motivo}</strong>: {l.descripcion}<br />
                           <span className="text-gray-400">Ticket: <a href={`https://soporte.flexxus.com.ar/tickets/${l.ticket}`} target="_blank" className="underline text-blue-400">{l.ticket}</a> | Agente: {l.agente}</span>
-                          {l.agente === nombreUsuario && (
+                          {(l.agente === nombreUsuario || nombreUsuario === "Flexxus") && (
                             <Pencil
                               size={16}
                               className="absolute top-0 right-0 cursor-pointer text-gray-300 hover:scale-110 transition-transform"
