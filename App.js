@@ -351,7 +351,7 @@ export default function App() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-start auto-rows-min grid-flow-dense">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 items-start auto-rows-min grid-flow-dense">
         {filteredData.map((item, index) => {
           const llamadasDisponibles = 5 - item.llamadas.length;
           const bgColor = llamadasDisponibles === 0 ? "bg-red-400/20" : "bg-green-400/20";
