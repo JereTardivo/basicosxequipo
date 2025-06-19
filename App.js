@@ -390,8 +390,8 @@ export default function App() {
         {filteredData.map((item, index) => {
           const bgColor = item.llamadas.length >= 5 ? "bg-red-400/20" : "bg-green-400/20";
           return (
-            <div key={index} onClick={() => handleModalOpen(item.empresa)} className="cursor-pointer">
-              <Card className={`${bgColor} p-6 cursor-pointer`}>
+            <div key={index} onClick={() => handleModalOpen(item.empresa)} className="cursor-pointer transform transition-all duration-300 hover:scale-105">
+              <Card className={`${bgColor} p-6 transition-all duration-300 border border-transparent hover:border-blue-400 hover:bg-opacity-40 hover:shadow-lg`}>
                 <CardContent className="relative">
                   <h2 className="text-xl font-bold">{item.empresa}</h2>
                   <p>Llamadas Realizadas: {item.llamadas.length} </p>
