@@ -321,8 +321,13 @@ export default function App() {
           </div>
           <div className="flex items-center bg-gray-700 border border-gray-600 rounded-2xl-md px-2">
             <Users size={18} className="text-gray-200 mr-2" />
-            <select value={equipoFilter} onChange={(e) => setEquipoFilter(e.target.value)}
-              className="bg-gray-700 text-gray-200 border-none p-2 w-full appearance-none">
+            <select
+              value={equipoFilter}
+              onChange={(e) => setEquipoFilter(e.target.value)}
+              disabled={nombreUsuario !== "Flexxus"} // ← deshabilita si no es Flexxus
+              className={`bg-gray-700 text-gray-200 border-none p-2 w-full appearance-none ${nombreUsuario !== "Flexxus" ? "opacity-60 cursor-not-allowed" : ""
+                }`}
+            >
               <option value="">Todos los equipos</option>
               <option value="Equipo 1">Equipo 1</option>
               <option value="Equipo 2">Equipo 2</option>
@@ -399,15 +404,15 @@ export default function App() {
                   <h2 className="text-xl font-bold tracking-wide">{item.empresa}</h2>
                   <p>Llamadas disponibles: {llamadasDisponibles}</p>
                   <ul className="pl-4">
-  {item.llamadas.map((llamada, i) => (
-    <div key={i} className="pb-2">
-      <li className="ml-4">
-        <strong>{llamada.motivo}</strong>: {llamada.descripcion} (Ticket: <a href={`https://soporte.flexxus.com.ar/tickets/${llamada.ticket}`} target="_blank" className="text-blue-400 underline hover:text-blue-300">{llamada.ticket}</a>)
-      </li>
-      {i !== item.llamadas.length - 1 && <hr className="border-gray-600 my-2" />}
-    </div>
-  ))}
-</ul>
+                    {item.llamadas.map((llamada, i) => (
+                      <div key={i} className="pb-2">
+                        <li className="ml-4">
+                          <strong>{llamada.motivo}</strong>: {llamada.descripcion} (Ticket: <a href={`https://soporte.flexxus.com.ar/tickets/${llamada.ticket}`} target="_blank" className="text-blue-400 underline hover:text-blue-300">{llamada.ticket}</a>)
+                        </li>
+                        {i !== item.llamadas.length - 1 && <hr className="border-gray-600 my-2" />}
+                      </div>
+                    ))}
+                  </ul>
 
                   {isLogged && (item.equipo === equipoFilter || equipoFilter === "") && item.llamadas.length < 5 && (
                     <div className="absolute bottom-2 right-2">
