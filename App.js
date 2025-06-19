@@ -12,7 +12,7 @@ import {
   deleteDoc,
   getDoc
 } from "firebase/firestore";
-import { Pencil, Trash2, PhoneCall, FileSpreadsheet, LogIn, LogOut, Building, Users } from "lucide-react";
+import { Pencil, Trash2, PhoneCall, FileSpreadsheet, LogIn, LogOut, Building, Users, KeyRound } from "lucide-react";
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 
@@ -35,6 +35,7 @@ export default function App() {
   const [loginError, setLoginError] = useState("");
   const [isLogged, setIsLogged] = useState(false);
   const [nombreUsuario, setNombreUsuario] = useState("");
+  const [userDocId, setUserDocId] = useState("");
   const [modalAddOpen, setModalAddOpen] = useState(false);
   const [modalEditOpen, setModalEditOpen] = useState(false);
   const [modalDeleteOpen, setModalDeleteOpen] = useState(false);
@@ -44,6 +45,13 @@ export default function App() {
   const [isFlexxus, setIsFlexxus] = useState(false);
   const [editandoIndex, setEditandoIndex] = useState(null);
   const [editLlamada, setEditLlamada] = useState({ motivo: "", descripcion: "", ticket: "" });
+  const [modalPasswordOpen, setModalPasswordOpen] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    actual: "",
+    nueva: "",
+    repetir: ""
+  });
+  const [passwordError, setPasswordError] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -81,6 +89,7 @@ export default function App() {
     setIsLogged(false);
     setEquipoFilter("");
     setNombreUsuario("");
+    setUsuario("");
     localStorage.removeItem("isLogged");
     localStorage.removeItem("equipoSeleccionado");
   };
@@ -95,6 +104,7 @@ export default function App() {
         if (data.password === login.pass) {
           setIsLogged(true);
           setNombreUsuario(data.nombre || data.usuario);
+          setUserDocId(data.usuario);
           setEquipoFilter(data.equipo || "");
           setIsFlexxus(!data.equipo);
           setLoginError("");
@@ -315,6 +325,42 @@ export default function App() {
     setEditandoIndex(null);
   };
 
+  const handlePasswordChange = async () => {
+    setPasswordError("");
+    
+
+    if (passwordForm.nueva !== passwordForm.repetir) {
+      setPasswordError("Las nuevas contraseñas no coinciden.");
+      return;
+    }
+
+    try {
+      const docRef = doc(db, "usuarios", userDocId);
+      const docSnap = await getDoc(docRef);
+
+      if (!docSnap.exists()) {
+        setPasswordError("Usuario no encontrado.");
+        return;
+      }
+
+      const data = docSnap.data();
+      if (data.password !== passwordForm.actual) {
+        setPasswordError("La contraseña actual es incorrecta.");
+        return;
+      }
+
+      await setDoc(docRef, {
+        ...data,
+        password: passwordForm.nueva
+      });
+
+      setModalPasswordOpen(false);
+    } catch (error) {
+      console.error("Error al actualizar contraseña:", error);
+      setPasswordError("Ocurrió un error al guardar la nueva contraseña.");
+    }
+  };
+
 
   const esFormularioValido = nuevoNombreEmpresa.trim() !== "" && nuevoEquipoEmpresa !== "";
 
@@ -357,7 +403,21 @@ export default function App() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-center w-full">Gestión de Llamadas a Clientes con Soporte Básico</h1>
         <div className="absolute top-4 right-4 flex gap-3 items-center">
-          {nombreUsuario && <span className="text-gray-200 font-semibold mr-2">{nombreUsuario}</span>}
+          {nombreUsuario && (
+            <div className="flex items-center gap-2 mr-2">
+              <span className="text-gray-200 font-semibold">{nombreUsuario}</span>
+              <KeyRound
+                size={18}
+                className="text-yellow-400 hover:text-yellow-500 cursor-pointer"
+                title="Cambiar contraseña"
+                onClick={() => {
+                  setPasswordForm({ actual: "", nueva: "", repetir: "" });
+                  setPasswordError("");
+                  setModalPasswordOpen(true);
+                }}
+              />
+            </div>
+          )}
           {isLogged ? (
             <LogOut className="text-red-400 cursor-pointer hover:text-red-600" size={28} onClick={handleLogout} />
           ) : (
@@ -418,7 +478,7 @@ export default function App() {
             <div key={index} onClick={() => handleModalOpen(item.empresa)} className="cursor-pointer transform transition-all duration-300 hover:scale-105">
               <Card className={`${bgColor} p-6 transition-all duration-300 border border-transparent hover:border-blue-400 hover:bg-opacity-40 hover:shadow-lg`}>
                 <CardContent className="relative">
-                  <h2 className="text-xl font-bold">{item.empresa}</h2>
+                  <h2 className="text-xl font-bold text-ellipsis overflow-hidden whitespace-nowrap" title={item.empresa}>{item.empresa}</h2>
                   <p>Llamadas Realizadas: {item.llamadas.length} </p>
 
                   {isLogged && (nombreUsuario === "Flexxus") && (
@@ -652,6 +712,55 @@ export default function App() {
           </div>
         )
       }
+
+      {modalPasswordOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
+          <div className="border border-gray-500 bg-gray-700 p-6 rounded-2xl w-full max-w-sm relative">
+            <button
+              onClick={() => setModalPasswordOpen(false)}
+              className="absolute top-2 right-3 text-white text-xl"
+            >
+              ×
+            </button>
+            <h2 className="text-lg font-bold mb-4">Cambiar contraseña</h2>
+            <p className="text-sm font-semibold text-gray-300 mb-1">Contraseña actual</p>
+            <input
+              type="password"
+              placeholder="Contraseña actual"
+              value={passwordForm.actual}
+              onChange={(e) => setPasswordForm({ ...passwordForm, actual: e.target.value })}
+              className="w-full p-2 mb-3 rounded bg-gray-600 text-white"
+            />
+            <p className="text-sm font-semibold text-gray-300 mb-1">Nueva contraseña</p>
+            <input
+              type="password"
+              placeholder="Nueva contraseña"
+              value={passwordForm.nueva}
+              onChange={(e) => setPasswordForm({ ...passwordForm, nueva: e.target.value })}
+              className="w-full p-2 mb-3 rounded bg-gray-600 text-white"
+            />
+            <p className="text-sm font-semibold text-gray-300 mb-1">Repetir nueva contraseña</p>
+            <input
+              type="password"
+              placeholder="Repetir nueva contraseña"
+              value={passwordForm.repetir}
+              onChange={(e) => setPasswordForm({ ...passwordForm, repetir: e.target.value })}
+              className="w-full p-2 mb-4 rounded bg-gray-600 text-white"
+            />
+
+            {passwordError && <p className="text-red-400 text-sm mb-4">{passwordError}</p>}
+
+            <div className="flex justify-end gap-2">
+              <Button onClick={() => setModalPasswordOpen(false)} className="bg-red-500 text-white">
+                Cancelar
+              </Button>
+              <Button onClick={handlePasswordChange} className="bg-green-500 text-white">
+                Guardar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
 
