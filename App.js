@@ -15,6 +15,7 @@ import {
 import { Pencil, Trash2, PhoneCall, FileSpreadsheet, LogIn, LogOut, Building, Users, KeyRound, SortDesc } from "lucide-react";
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
+import { Toaster, toast } from 'react-hot-toast';
 
 export default function App() {
   const [data, setData] = useState([]);
@@ -72,6 +73,46 @@ export default function App() {
       localStorage.setItem("nombreUsuario", nombreUsuario);
     }
   }, [equipoFilter, isLogged]);
+
+  useEffect(() => {
+    const resetLlamadasSiCambioMes = async () => {
+      if (typeof window === "undefined") return;
+
+      const mesActual = new Date().getMonth();
+      const mesGuardado = localStorage.getItem("mesActual");
+
+      if (mesGuardado === null) {
+        // Primera vez que corre: no borra nada, solo guarda el mes actual
+        localStorage.setItem("mesActual", mesActual.toString());
+        return;
+      }
+
+      if (parseInt(mesGuardado) !== mesActual) {
+        try {
+          const snapshot = await getDocs(collection(db, "empresas"));
+          const nuevasEmpresas = [];
+
+          for (const docSnap of snapshot.docs) {
+            const empresaData = docSnap.data();
+            const nuevaEmpresa = { ...empresaData, llamadas: [] };
+            await setDoc(doc(db, "empresas", docSnap.id), nuevaEmpresa);
+            nuevasEmpresas.push(nuevaEmpresa);
+          }
+
+          setData(nuevasEmpresas);
+          localStorage.setItem("mesActual", mesActual.toString());
+          toast.success("Llamadas reiniciadas automáticamente por cambio de mes.");
+        } catch (error) {
+          console.error("Error al resetear llamadas:", error);
+          toast.error("Error al reiniciar las llamadas.");
+        }
+      }
+    };
+
+    resetLlamadasSiCambioMes();
+  }, []);
+
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -409,7 +450,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-800 to-gray-900 text-gray-200 p-4">
-
+      <Toaster position="bottom-right" />
       <div className="relative flex items-center justify-center mb-10">
         {/* Logo alineado a la izquierda */}
         <div className="absolute left-0">
@@ -572,7 +613,7 @@ export default function App() {
                     <li key={i} className="border-b border-gray-600 pb-2 text-sm relative">
                       {editandoIndex === i ? (
                         <>
-                        <p className="text-sm text-gray-300 mb-1">Motivo</p>
+                          <p className="text-sm text-gray-300 mb-1">Motivo</p>
                           <input
                             type="text"
                             value={editLlamada.motivo}
