@@ -851,6 +851,15 @@ export default function App() {
                   </button>
                 </div>
               )}
+              {nombreUsuario === "Flexxus" && (
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept=".xlsx, .xls"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              )}
             </div>
           )}
 
@@ -1513,9 +1522,10 @@ export default function App() {
         )
       }
 
-
-
     </div >
+
+
+
 
   );
 
