@@ -663,6 +663,23 @@ export default function App() {
     };
   }, [modalDeleteOpen]);
 
+   useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === "Escape") {
+        setModalOpen(false);
+        setEmpresaSeleccionada("");
+      }
+    };
+
+    if (setModalOpen) {
+      document.addEventListener("keydown", handleEsc);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, [setModalOpen]);
+
 
 
   if (!isLogged) {
