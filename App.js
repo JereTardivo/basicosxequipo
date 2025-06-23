@@ -924,21 +924,17 @@ export default function App() {
               <option value="Equipo Corralon">Equipo Corralon</option>
             </select>
           </div>
-
-
-
-
-          <div className="flex items-center gap-2 ml-auto">
-            <SortDesc size={20} className="text-gray-300" />
-            <select
-              value={orden}
-              onChange={(e) => setOrden(e.target.value)}
-              className="bg-gray-700 text-gray-200 border border-gray-600 rounded-2xl px-3 py-1"
-            >
-              <option value="nombre">Nombre empresa</option>
-              <option value="llamadas">Llamadas realizadas</option>
-            </select>
-          </div>
+        </div>
+        <div className="flex items-center gap-2 ml-auto">
+          <SortDesc size={20} className="text-gray-300" />
+          <select
+            value={orden}
+            onChange={(e) => setOrden(e.target.value)}
+            className="bg-gray-700 text-gray-200 border border-gray-600 rounded-2xl px-3 py-1"
+          >
+            <option value="nombre">Nombre empresa</option>
+            <option value="llamadas">Llamadas realizadas</option>
+          </select>
         </div>
       </div>
 
