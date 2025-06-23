@@ -64,6 +64,10 @@ export default function App() {
   const menuUsuariosRef = useRef(null);
   const menuInformesRef = useRef(null);
   const esFormularioValido = nuevoNombreEmpresa.trim() !== "" && nuevoEquipoEmpresa !== "";
+  const mesActual = new Date().toLocaleDateString("es-AR", {
+  month: "long",
+  year: "numeric"
+}).replace(" de ", " ").toLowerCase();
 
 
   const exportarUsuarios = async () => {
@@ -160,6 +164,7 @@ export default function App() {
           await setDoc(doc(db, "empresas", nombre), {
             empresa: nombre,
             equipo,
+            mes,
             llamadas: [],
           });
         }
@@ -229,7 +234,10 @@ export default function App() {
 
     const updated = data.map((item) => {
       if (item.empresa === selectedEmpresa && item.llamadas.length < 5) {
-        const mesActual = new Date().toLocaleString("default", { month: "long", year: "numeric" });
+        const mesActual = new Date().toLocaleDateString("es-AR", {
+          month: "long",
+          year: "numeric"
+        }).replace(" de ", " ");
         const nuevas = [...item.llamadas, { ...formValues, agente: nombreUsuario, mes: mesActual }];
         const updatedItem = { ...item, llamadas: nuevas };
         const docId = item.empresa;
@@ -392,7 +400,10 @@ export default function App() {
 
   const guardarEdicion = async (index) => {
     const empresaActual = selectedEmpresa;
-    const mesActual = new Date().toLocaleString("default", { month: "long", year: "numeric" });
+    const mesActual = new Date().toLocaleDateString("es-AR", {
+      month: "long",
+      year: "numeric"
+    }).replace(" de ", " ");
     const nuevasLlamadas = [...selectedEmpresaData.llamadas];
     nuevasLlamadas[index] = { ...editLlamada, agente: nuevasLlamadas[index].agente, mes: mesActual };
 
@@ -549,6 +560,7 @@ export default function App() {
     }
   };
 
+
   //USE EFFECTS
 
 
@@ -577,16 +589,16 @@ export default function App() {
     const resetLlamadasSiCambioMes = async () => {
       if (typeof window === "undefined") return;
 
-      const mesActual = new Date().getMonth();
-      const mesGuardado = localStorage.getItem("mesActual");
+      const mesActualCambioMes = new Date().getMonth();
+      const mesGuardado = localStorage.getItem("mesActualCambioMes");
 
       if (mesGuardado === null) {
         // Primera vez que corre: no borra nada, solo guarda el mes actual
-        localStorage.setItem("mesActual", mesActual.toString());
+        localStorage.setItem("mesActualCambioMes", mesActualCambioMes.toString());
         return;
       }
 
-      if (parseInt(mesGuardado) !== mesActual) {
+      if (parseInt(mesGuardado) !== mesActualCambioMes) {
         try {
           const snapshot = await getDocs(collection(db, "empresas"));
           const nuevasEmpresas = [];
@@ -599,7 +611,7 @@ export default function App() {
           }
 
           setData(nuevasEmpresas);
-          localStorage.setItem("mesActual", mesActual.toString());
+          localStorage.setItem("mesActualCambioMes", mesActualCambioMes.toString());
           toast.success("Llamadas reiniciadas automáticamente por cambio de mes.");
         } catch (error) {
           console.error("Error al resetear llamadas:", error);
@@ -808,6 +820,8 @@ export default function App() {
     );
   }
 
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-800 to-gray-900 text-gray-200 p-4">
       <Toaster position="bottom-right" />
@@ -826,6 +840,8 @@ export default function App() {
         <h1 className="text-2xl font-bold text-center">
           Gestión de Llamadas a Clientes con Soporte Básico
         </h1>
+
+
 
         {/* Usuario e íconos a la derecha */}
         <div className="absolute right-0 flex gap-3 items-center">
@@ -853,7 +869,7 @@ export default function App() {
                   >
                     <div className="flex items-center gap-2">
                       <FileSpreadsheet size={18} />
-                      <span>Informes</span>
+                      <span>Llamadas Mensuales</span>
                     </div>
                   </button>
                 </div>
@@ -1092,11 +1108,14 @@ export default function App() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-start auto-rows-min grid-flow-dense">
 
         {sortedData.map((item, index) => {
-          const mesActual = new Date().toLocaleString("default", { month: "long", year: "numeric" }); // ej: "junio 2025"
-          const llamadasMesActual = item.llamadas.filter((l) => l.mes === mesActual);
+          const mesActual = new Date().toLocaleDateString("es-AR", {
+          month: "long",
+          year: "numeric"
+        }).replace(" de ", " ");
+          const llamadasMesActual = item.llamadas.filter((l) => (l.mes || "").toLowerCase() === mesActual);
           const bgColor = llamadasMesActual.length >= 5 ? "bg-red-400/20" : "bg-green-400/20";
-          
-          
+
+
           return (
             <div key={index} onClick={() => handleModalOpen(item.empresa)} className="cursor-pointer transform transition-all duration-300 hover:scale-105">
               <Card className={`${bgColor} p-6 transition-all duration-300 border border-transparent hover:border-blue-400 hover:bg-opacity-40 hover:shadow-lg`}>
@@ -1113,20 +1132,19 @@ export default function App() {
 
 
       {
-        modalOpen && selectedEmpresaData && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
-            <div className="bg-gray-700 p-6 rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto overflow-x-hidden relative">
-              <button className="absolute top-2 right-3 text-white text-xl" onClick={() => setModalOpen(false)}>×</button>
-              <h2 className="text-2xl font-bold mb-2">{selectedEmpresaData.empresa}</h2>
-              <p className="mb-4">Llamadas realizadas: {
-                selectedEmpresaData.llamadas.filter((l) => l.mes === mesActual).length
-              }</p>
+        modalOpen && selectedEmpresaData && (() => {
+          const llamadasMesActual = selectedEmpresaData.llamadas.filter((l) => l.mes === mesActual);
 
-              {selectedEmpresaData.llamadas.length > 0 && (
-                <ul className="space-y-4 mb-4">
-                  {selectedEmpresaData.llamadas
-                    .filter((l) => l.mes === mesActual)
-                    .map((l, i) => (
+          return (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
+              <div className="bg-gray-700 p-6 rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto overflow-x-hidden relative">
+                <button className="absolute top-2 right-3 text-white text-xl" onClick={() => setModalOpen(false)}>×</button>
+                <h2 className="text-2xl font-bold mb-2">{selectedEmpresaData.empresa}</h2>
+                <p className="mb-4">Llamadas realizadas: {llamadasMesActual.length}</p>
+
+                {llamadasMesActual.length > 0 && (
+                  <ul className="space-y-4 mb-4">
+                    {llamadasMesActual.map((l, i) => (
                       <li key={i} className="border-b border-gray-600 pb-2 text-sm relative">
                         {editandoIndex === i ? (
                           <>
@@ -1195,52 +1213,58 @@ export default function App() {
                         )}
                       </li>
                     ))}
-                </ul>
-              )}
+                  </ul>
+                )}
 
-
-              {selectedEmpresaData.llamadas.length < 5 && (
-                <div className="space-y-3">
-                  <strong><u>Nueva Llamada:</u></strong><br />
-                  <input
-                    type="text"
-                    maxLength={50}
-                    placeholder="Motivo"
-                    className="w-full p-2 rounded bg-gray-600 text-white"
-                    value={formValues.motivo}
-                    onChange={(e) => setFormValues({ ...formValues, motivo: e.target.value })} />
-                  <textarea
-                    placeholder="Descripción"
-                    className="w-full p-2 rounded bg-gray-600 text-white"
-                    rows="3"
-                    maxLength={250}
-                    value={formValues.descripcion}
-                    onChange={(e) => {
-                      const texto = e.target.value;
-                      if (texto.length <= 250) {
-                        setFormValues({ ...formValues, descripcion: texto });
-                      }
-                    }}
-                  />
-                  <p className={`text-sm text-right ${formValues.descripcion.length >= 250 ? 'text-red-400' : 'text-gray-400'}`}>
-                    {formValues.descripcion.length}/250
-                  </p>
-                  <input
-                    type="text"
-                    placeholder="Ticket (6 dígitos)"
-                    className="w-full p-2 rounded bg-gray-600 text-white"
-                    maxLength={6} value={formValues.ticket} onChange={(e) => setFormValues({ ...formValues, ticket: e.target.value.replace(/[^0-9]/g, "") })} />
-                  {Object.values(errors).map((err, i) => (<p key={i} className="text-red-400 text-sm">{err}</p>))}
-                  <div className="flex justify-end gap-2">
-                    <Button onClick={() => setModalOpen(false)} className="bg-red-500 text-white">Cancelar</Button>
-                    <Button onClick={handleModalSubmit} className="bg-green-500 text-white">Guardar</Button>
+                {llamadasMesActual.length < 5 && (
+                  <div className="space-y-3">
+                    <strong><u>Nueva Llamada:</u></strong><br />
+                    <input
+                      type="text"
+                      maxLength={50}
+                      placeholder="Motivo"
+                      className="w-full p-2 rounded bg-gray-600 text-white"
+                      value={formValues.motivo}
+                      onChange={(e) => setFormValues({ ...formValues, motivo: e.target.value })}
+                    />
+                    <textarea
+                      placeholder="Descripción"
+                      className="w-full p-2 rounded bg-gray-600 text-white"
+                      rows="3"
+                      maxLength={250}
+                      value={formValues.descripcion}
+                      onChange={(e) => {
+                        const texto = e.target.value;
+                        if (texto.length <= 250) {
+                          setFormValues({ ...formValues, descripcion: texto });
+                        }
+                      }}
+                    />
+                    <p className={`text-sm text-right ${formValues.descripcion.length >= 250 ? 'text-red-400' : 'text-gray-400'}`}>
+                      {formValues.descripcion.length}/250
+                    </p>
+                    <input
+                      type="text"
+                      placeholder="Ticket (6 dígitos)"
+                      className="w-full p-2 rounded bg-gray-600 text-white"
+                      maxLength={6}
+                      value={formValues.ticket}
+                      onChange={(e) => setFormValues({ ...formValues, ticket: e.target.value.replace(/[^0-9]/g, "") })}
+                    />
+                    {Object.values(errors).map((err, i) => (
+                      <p key={i} className="text-red-400 text-sm">{err}</p>
+                    ))}
+                    <div className="flex justify-end gap-2">
+                      <Button onClick={() => setModalOpen(false)} className="bg-red-500 text-white">Cancelar</Button>
+                      <Button onClick={handleModalSubmit} className="bg-green-500 text-white">Guardar</Button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-        )
-      }
+          );
+        })()}
+
 
       {
         loginModal && (
