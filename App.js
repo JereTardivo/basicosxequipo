@@ -65,6 +65,7 @@ export default function App() {
   const menuInformesRef = useRef(null);
   const esFormularioValido = nuevoNombreEmpresa.trim() !== "" && nuevoEquipoEmpresa !== "";
 
+
   const exportarUsuarios = async () => {
     const querySnapshot = await getDocs(collection(db, "usuarios"));
     const lista = [];
@@ -135,27 +136,44 @@ export default function App() {
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const json = XLSX.utils.sheet_to_json(worksheet);
 
-      // Borrar todos los documentos anteriores
       const snapshot = await getDocs(collection(db, "empresas"));
-      snapshot.forEach(async (docu) => {
-        await deleteDoc(doc(db, "empresas", docu.id));
-      });
+      const empresasEnFirebase = snapshot.docs.map((doc) => doc.id);
+      const empresasEnExcel = json.map(row => row.EMPRESA);
 
-      const newData = json.map((row) => ({
-        empresa: row.EMPRESA,
-        equipo: row.EQUIPO.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase()),
-        llamadas: [],
-      }));
+      // Empresas a eliminar: están en Firebase pero no en Excel
+      const empresasAEliminar = empresasEnFirebase.filter(id => !empresasEnExcel.includes(id));
 
-      setData(newData);
-      for (const row of newData) {
-        const docId = row.empresa;
-        await setDoc(doc(db, "empresas", docId), row);
+      // Empresas a agregar: están en Excel pero no en Firebase
+      const empresasAAgregar = empresasEnExcel.filter(nombre => !empresasEnFirebase.includes(nombre));
+
+      // Eliminar empresas que ya no están en el Excel
+      for (const id of empresasAEliminar) {
+        await deleteDoc(doc(db, "empresas", id));
       }
+
+      // Agregar solo empresas nuevas
+      for (const row of json) {
+        const nombre = row.EMPRESA;
+        const equipo = row.EQUIPO.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+
+        if (empresasAAgregar.includes(nombre)) {
+          await setDoc(doc(db, "empresas", nombre), {
+            empresa: nombre,
+            equipo,
+            llamadas: [],
+          });
+        }
+      }
+
+      // Volver a cargar datos actualizados desde Firebase
+      const nuevoSnapshot = await getDocs(collection(db, "empresas"));
+      const nuevasEmpresas = nuevoSnapshot.docs.map((doc) => doc.data());
+      setData(nuevasEmpresas);
     };
 
     reader.readAsBinaryString(file);
   };
+
 
   const cargarMesesDisponibles = async () => {
     const snapshot = await getDocs(collection(db, "empresas"));
@@ -1074,13 +1092,17 @@ export default function App() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-start auto-rows-min grid-flow-dense">
 
         {sortedData.map((item, index) => {
-          const bgColor = item.llamadas.length >= 5 ? "bg-red-400/20" : "bg-green-400/20";
+          const mesActual = new Date().toLocaleString("default", { month: "long", year: "numeric" }); // ej: "junio 2025"
+          const llamadasMesActual = item.llamadas.filter((l) => l.mes === mesActual);
+          const bgColor = llamadasMesActual.length >= 5 ? "bg-red-400/20" : "bg-green-400/20";
+          
+          
           return (
             <div key={index} onClick={() => handleModalOpen(item.empresa)} className="cursor-pointer transform transition-all duration-300 hover:scale-105">
               <Card className={`${bgColor} p-6 transition-all duration-300 border border-transparent hover:border-blue-400 hover:bg-opacity-40 hover:shadow-lg`}>
                 <CardContent className="relative">
                   <h2 className="text-xl font-bold text-ellipsis overflow-hidden whitespace-nowrap" title={item.empresa}>{item.empresa}</h2>
-                  <p>Llamadas Realizadas: {item.llamadas.length} </p>
+                  <p>Llamadas Realizadas: {llamadasMesActual.length}</p>
                 </CardContent>
               </Card>
             </div>
@@ -1096,79 +1118,83 @@ export default function App() {
             <div className="bg-gray-700 p-6 rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto overflow-x-hidden relative">
               <button className="absolute top-2 right-3 text-white text-xl" onClick={() => setModalOpen(false)}>×</button>
               <h2 className="text-2xl font-bold mb-2">{selectedEmpresaData.empresa}</h2>
-              <p className="mb-4">Llamadas realizadas: {selectedEmpresaData.llamadas.length}</p>
+              <p className="mb-4">Llamadas realizadas: {
+                selectedEmpresaData.llamadas.filter((l) => l.mes === mesActual).length
+              }</p>
 
               {selectedEmpresaData.llamadas.length > 0 && (
                 <ul className="space-y-4 mb-4">
-                  {selectedEmpresaData.llamadas.map((l, i) => (
-                    <li key={i} className="border-b border-gray-600 pb-2 text-sm relative">
-                      {editandoIndex === i ? (
-                        <>
-                          <p className="text-sm text-gray-300 mb-1">Motivo</p>
-                          <input
-                            type="text"
-                            maxLength={50}
-                            value={editLlamada.motivo}
-                            onChange={(e) => setEditLlamada({ ...editLlamada, motivo: e.target.value })}
-                            className="w-full p-1 mb-1 rounded bg-gray-600 text-white"
-                            placeholder="Motivo"
-                          />
-                          <p className="text-sm text-gray-300 mb-1">Descripción</p>
-                          <textarea
-                            rows="2"
-                            maxLength={250}
-                            value={editLlamada.descripcion}
-                            onChange={(e) => {
-                              const texto = e.target.value;
-                              if (texto.length <= 250) {
-                                setEditLlamada({ ...editLlamada, descripcion: texto });
-                              }
-                            }}
-                            className="w-full p-1 mb-1 rounded bg-gray-600 text-white"
-                            placeholder="Descripción"
-                          />
-                          <p className={`text-sm text-right ${editLlamada.descripcion.length >= 250 ? 'text-red-400' : 'text-gray-400'}`}>
-                            {editLlamada.descripcion.length}/250
-                          </p>
-                          <p className="text-sm text-gray-300 mb-1">Ticket</p>
-                          <input
-                            type="text"
-                            value={editLlamada.ticket}
-                            maxLength={6}
-                            onChange={(e) =>
-                              setEditLlamada({ ...editLlamada, ticket: e.target.value.replace(/[^0-9]/g, "") })
-                            }
-                            className="w-1/2 p-1 mb-2 rounded bg-gray-600 text-white"
-                            placeholder="Ticket"
-                          />
-                          <div className="flex justify-end gap-2">
-                            <Button onClick={() => setEditandoIndex(null)} className="bg-red-500 text-white px-2 py-1">Cancelar</Button>
-                            <Button onClick={() => guardarEdicion(i)} className="bg-green-500 text-white px-2 py-1">Guardar</Button>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="break-words">
-                            <strong>{l.motivo}</strong>: {l.descripcion}<br />
-                            <span className="text-gray-400">
-                              Ticket: <a href={`https://soporte.flexxus.com.ar/tickets/${l.ticket}`} target="_blank" className="underline text-blue-400">{l.ticket}</a> | Agente: {l.agente}
-                            </span>
-                          </div>
-                          {(l.agente === nombreUsuario || nombreUsuario === "Flexxus") && (
-                            <Pencil
-                              size={16}
-                              className="absolute top-0 right-0 cursor-pointer text-gray-300 hover:scale-110 transition-transform"
-                              title="Editar llamada"
-                              onClick={() => {
-                                setEditandoIndex(i);
-                                setEditLlamada(l);
-                              }}
+                  {selectedEmpresaData.llamadas
+                    .filter((l) => l.mes === mesActual)
+                    .map((l, i) => (
+                      <li key={i} className="border-b border-gray-600 pb-2 text-sm relative">
+                        {editandoIndex === i ? (
+                          <>
+                            <p className="text-sm text-gray-300 mb-1">Motivo</p>
+                            <input
+                              type="text"
+                              maxLength={50}
+                              value={editLlamada.motivo}
+                              onChange={(e) => setEditLlamada({ ...editLlamada, motivo: e.target.value })}
+                              className="w-full p-1 mb-1 rounded bg-gray-600 text-white"
+                              placeholder="Motivo"
                             />
-                          )}
-                        </>
-                      )}
-                    </li>
-                  ))}
+                            <p className="text-sm text-gray-300 mb-1">Descripción</p>
+                            <textarea
+                              rows="2"
+                              maxLength={250}
+                              value={editLlamada.descripcion}
+                              onChange={(e) => {
+                                const texto = e.target.value;
+                                if (texto.length <= 250) {
+                                  setEditLlamada({ ...editLlamada, descripcion: texto });
+                                }
+                              }}
+                              className="w-full p-1 mb-1 rounded bg-gray-600 text-white"
+                              placeholder="Descripción"
+                            />
+                            <p className={`text-sm text-right ${editLlamada.descripcion.length >= 250 ? 'text-red-400' : 'text-gray-400'}`}>
+                              {editLlamada.descripcion.length}/250
+                            </p>
+                            <p className="text-sm text-gray-300 mb-1">Ticket</p>
+                            <input
+                              type="text"
+                              value={editLlamada.ticket}
+                              maxLength={6}
+                              onChange={(e) =>
+                                setEditLlamada({ ...editLlamada, ticket: e.target.value.replace(/[^0-9]/g, "") })
+                              }
+                              className="w-1/2 p-1 mb-2 rounded bg-gray-600 text-white"
+                              placeholder="Ticket"
+                            />
+                            <div className="flex justify-end gap-2">
+                              <Button onClick={() => setEditandoIndex(null)} className="bg-red-500 text-white px-2 py-1">Cancelar</Button>
+                              <Button onClick={() => guardarEdicion(i)} className="bg-green-500 text-white px-2 py-1">Guardar</Button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="break-words">
+                              <strong>{l.motivo}</strong>: {l.descripcion}<br />
+                              <span className="text-gray-400">
+                                Ticket: <a href={`https://soporte.flexxus.com.ar/tickets/${l.ticket}`} target="_blank" className="underline text-blue-400">{l.ticket}</a> | Agente: {l.agente}
+                              </span>
+                            </div>
+                            {(l.agente === nombreUsuario || nombreUsuario === "Flexxus") && (
+                              <Pencil
+                                size={16}
+                                className="absolute top-0 right-0 cursor-pointer text-gray-300 hover:scale-110 transition-transform"
+                                title="Editar llamada"
+                                onClick={() => {
+                                  setEditandoIndex(i);
+                                  setEditLlamada(l);
+                                }}
+                              />
+                            )}
+                          </>
+                        )}
+                      </li>
+                    ))}
                 </ul>
               )}
 
