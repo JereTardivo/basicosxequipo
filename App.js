@@ -802,7 +802,7 @@ export default function App() {
                       handleAddEmpresa();
                       setMenuEmpresasVisible(false);
                     }}
-                    className="block w-full text-left px-4 py-2 text-sm text-blue-400 hover:bg-gray-700"
+                    className="block w-full text-left px-4 py-2 text-sm text-green-400 hover:bg-gray-700"
                   >
                     <div className="flex items-center gap-2">
                       <Plus size={18} />
@@ -842,7 +842,7 @@ export default function App() {
                       fileInputRef.current?.click();
                       setMenuEmpresasVisible(false);
                     }}
-                    className="block w-full text-left px-4 py-2 text-sm text-green-400 hover:bg-gray-700"
+                    className="block w-full text-left px-4 py-2 text-sm text-blue-400 hover:bg-gray-700"
                   >
                     <div className="flex items-center gap-2">
                       <FileSpreadsheet size={18} />
