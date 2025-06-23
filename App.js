@@ -49,6 +49,8 @@ export default function App() {
   const [mesesDisponibles, setMesesDisponibles] = useState([]);
   const [mostrarInformes, setMostrarInformes] = useState(false);
   const [mesSeleccionado, setMesSeleccionado] = useState("");
+  const [menuInformesVisible, setMenuInformesVisible] = useState(false);
+
 
   const [equipoFilter, setEquipoFilter] = useState(() => {
     if (typeof window !== "undefined") {
@@ -60,6 +62,7 @@ export default function App() {
   const fileInputRef = useRef(null);
   const menuEmpresasRef = useRef(null);
   const menuUsuariosRef = useRef(null);
+  const menuInformesRef = useRef(null);
   const esFormularioValido = nuevoNombreEmpresa.trim() !== "" && nuevoEquipoEmpresa !== "";
 
   const exportarUsuarios = async () => {
@@ -739,6 +742,19 @@ export default function App() {
     };
   }, [setMostrarInformes]);
 
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (menuInformesRef.current && !menuInformesRef.current.contains(event.target)) {
+        setMenuInformesVisible(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
+
 
 
   if (!isLogged) {
@@ -797,20 +813,35 @@ export default function App() {
         <div className="absolute right-0 flex gap-3 items-center">
 
           {isLogged && isFlexxus && (
-            <div className="relative">
+            <div ref={menuInformesRef} className="relative">
               <button
-                onClick={() => {
-                  setMesSeleccionado("");
-                  setMostrarInformes(true);
-                }}
+                onClick={() => setMenuInformesVisible(!menuInformesVisible)}
                 className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded flex items-center gap-2"
               >
                 <FileSpreadsheet size={18} />
                 <span>Informes</span>
               </button>
+
+              {menuInformesVisible && (
+                <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded shadow-lg z-50">
+                  <button
+                    onClick={() => {
+                      setMesSeleccionado("");
+                      cargarMesesDisponibles();
+                      setMostrarInformes(true);
+                      setMenuInformesVisible(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-blue-400 hover:bg-gray-700"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileSpreadsheet size={18} />
+                      <span>Informes</span>
+                    </div>
+                  </button>
+                </div>
+              )}
             </div>
           )}
-
 
           {/* Botón Usuarios (solo Flexxus) */}
           {nombreUsuario === "Flexxus" && (
