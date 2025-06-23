@@ -1,7 +1,7 @@
 
 
 // IMPORTS
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import * as XLSX from "xlsx";
 import { db } from "./firebase";
 import {
@@ -12,7 +12,7 @@ import {
   deleteDoc,
   getDoc
 } from "firebase/firestore";
-import { Pencil, Trash2, PhoneCall, FileSpreadsheet, LogIn, LogOut, Building, Users, KeyRound, SortDesc } from "lucide-react";
+import { Pencil, Trash2, UserMinus, FileSpreadsheet, LogIn, LogOut, Building, Users, KeyRound, SortDesc, User, Briefcase, UserPlus, UserCog, Plus } from "lucide-react";
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { Toaster, toast } from 'react-hot-toast';
@@ -54,89 +54,46 @@ export default function App() {
   });
   const [passwordError, setPasswordError] = useState("");
   const [orden, setOrden] = useState("nombre");
+  const [mostrarFormularioUsuario, setMostrarFormularioUsuario] = useState(false);
+  const [nuevoUsuario, setNuevoUsuario] = useState({
+    nombre: "",
+    usuario: "",
+    password: "",
+    equipo: ""
+  });
+  const [mostrarEliminarUsuario, setMostrarEliminarUsuario] = useState(false);
+  const [usuariosDisponibles, setUsuariosDisponibles] = useState([]);
+  const [usuarioAEliminar, setUsuarioAEliminar] = useState(null);
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [mostrarModificarUsuario, setMostrarModificarUsuario] = useState(false);
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
+  const [menuEmpresasVisible, setMenuEmpresasVisible] = useState(false);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const equipoGuardado = localStorage.getItem("equipoSeleccionado");
-      const logueado = localStorage.getItem("isLogged") === "true";
-      if (equipoGuardado) setEquipoFilter(equipoGuardado);
-      if (logueado) setIsLogged(true);
-      const nombreGuardado = localStorage.getItem("nombreUsuario");
-      if (nombreGuardado) setNombreUsuario(nombreGuardado);
-    }
-  }, []);
+  const fileInputRef = useRef(null);
+  const menuEmpresasRef = useRef(null);
+  const menuUsuariosRef = useRef(null);
+  const esFormularioValido = nuevoNombreEmpresa.trim() !== "" && nuevoEquipoEmpresa !== "";
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("equipoSeleccionado", equipoFilter);
-      localStorage.setItem("isLogged", isLogged);
-      localStorage.setItem("nombreUsuario", nombreUsuario);
-    }
-  }, [equipoFilter, isLogged]);
+  const exportarUsuarios = async () => {
+    const querySnapshot = await getDocs(collection(db, "usuarios"));
+    const lista = [];
 
-  useEffect(() => {
-    const resetLlamadasSiCambioMes = async () => {
-      if (typeof window === "undefined") return;
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      lista.push({
+        Nombre: data.nombre || "",
+        Usuario: data.usuario || "",
+        Password: data.password || "",
+        Equipo: data.equipo || ""
+      });
+    });
 
-      const mesActual = new Date().getMonth();
-      const mesGuardado = localStorage.getItem("mesActual");
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(lista);
+    XLSX.utils.book_append_sheet(wb, ws, "Usuarios");
 
-      if (mesGuardado === null) {
-        // Primera vez que corre: no borra nada, solo guarda el mes actual
-        localStorage.setItem("mesActual", mesActual.toString());
-        return;
-      }
-
-      if (parseInt(mesGuardado) !== mesActual) {
-        try {
-          const snapshot = await getDocs(collection(db, "empresas"));
-          const nuevasEmpresas = [];
-
-          for (const docSnap of snapshot.docs) {
-            const empresaData = docSnap.data();
-            const nuevaEmpresa = { ...empresaData, llamadas: [] };
-            await setDoc(doc(db, "empresas", docSnap.id), nuevaEmpresa);
-            nuevasEmpresas.push(nuevaEmpresa);
-          }
-
-          setData(nuevasEmpresas);
-          localStorage.setItem("mesActual", mesActual.toString());
-          toast.success("Llamadas reiniciadas automáticamente por cambio de mes.");
-        } catch (error) {
-          console.error("Error al resetear llamadas:", error);
-          toast.error("Error al reiniciar las llamadas.");
-        }
-      }
-    };
-
-    resetLlamadasSiCambioMes();
-  }, []);
-
-
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "empresas"));
-        const firebaseData = querySnapshot.docs.map((doc) => doc.data());
-        setData(firebaseData);
-      } catch (error) {
-        console.error("Error fetching data from Firebase:", error);
-      }
-    };
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    const ordenGuardado = localStorage.getItem("orden");
-    if (ordenGuardado) {
-      setOrden(ordenGuardado);
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("orden", orden);
-  }, [orden]);
+    XLSX.writeFile(wb, "usuarios_exportados.xlsx");
+  };
 
   const handleLogout = () => {
     setIsLogged(false);
@@ -422,8 +379,290 @@ export default function App() {
     }
   };
 
+  const agregarUsuario = async (nuevoUsuario) => {
+    if (
+      !nuevoUsuario.usuario?.trim() ||
+      !nuevoUsuario.password?.trim() ||
+      !nuevoUsuario.nombre?.trim() ||
+      !nuevoUsuario.equipo?.trim()
+    ) {
+      toast.error("Todos los campos son obligatorios.");
+      return;
+    }
 
-  const esFormularioValido = nuevoNombreEmpresa.trim() !== "" && nuevoEquipoEmpresa !== "";
+    const usuarioId = nuevoUsuario.usuario.trim().toLowerCase();
+    const docRef = doc(db, "usuarios", usuarioId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      toast.error("Ya existe un usuario con ese nombre.");
+      return;
+    }
+
+    try {
+      await setDoc(docRef, {
+        nombre: nuevoUsuario.nombre.trim(),
+        usuario: usuarioId,
+        password: nuevoUsuario.password.trim(),
+        equipo: nuevoUsuario.equipo.trim()
+      });
+      toast.success("Usuario agregado correctamente");
+    } catch (err) {
+      toast.error("Error al agregar usuario");
+      console.error(err);
+    }
+  };
+
+  const obtenerUsuarios = async () => {
+    const snapshot = await getDocs(collection(db, "usuarios"));
+    const lista = [];
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      lista.push({ id: doc.id, nombre: data.nombre });
+    });
+    setUsuariosDisponibles(lista);
+  };
+
+  const confirmarEliminacionUsuario = async () => {
+    if (!usuarioAEliminar) return;
+
+    try {
+      await deleteDoc(doc(db, "usuarios", usuarioAEliminar.id));
+      toast.success("Usuario eliminado correctamente");
+      setMostrarEliminarUsuario(false);
+      setUsuarioAEliminar(null);
+      obtenerUsuarios(); // recarga lista
+    } catch (err) {
+      toast.error("Error al eliminar");
+      console.error(err);
+    }
+  };
+
+  const guardarCambiosUsuario = async () => {
+    if (
+      !usuarioSeleccionado?.nombre?.trim() ||
+      !usuarioSeleccionado?.usuario?.trim() ||
+      !usuarioSeleccionado?.password?.trim() ||
+      !usuarioSeleccionado?.equipo?.trim()
+    ) {
+      toast.error("Todos los campos son obligatorios");
+      return;
+    }
+
+    try {
+      await setDoc(doc(db, "usuarios", usuarioSeleccionado.id), {
+        nombre: usuarioSeleccionado.nombre.trim(),
+        usuario: usuarioSeleccionado.usuario.trim().toLowerCase(),
+        password: usuarioSeleccionado.password.trim(),
+        equipo: usuarioSeleccionado.equipo.trim()
+      });
+      toast.success("Usuario modificado correctamente");
+      setMostrarModificarUsuario(false);
+      setUsuarioSeleccionado(null);
+      obtenerUsuarios(); // refrescar lista
+    } catch (err) {
+      toast.error("Error al guardar cambios");
+      console.error(err);
+    }
+  };
+
+  const obtenerEmpresas = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, "empresas"));
+      const lista = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setData(lista);
+    } catch (error) {
+      console.error("Error obteniendo empresas:", error);
+    }
+  };
+
+  //USE EFFECTS
+
+
+
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const equipoGuardado = localStorage.getItem("equipoSeleccionado");
+      const logueado = localStorage.getItem("isLogged") === "true";
+      if (equipoGuardado) setEquipoFilter(equipoGuardado);
+      if (logueado) setIsLogged(true);
+      const nombreGuardado = localStorage.getItem("nombreUsuario");
+      if (nombreGuardado) setNombreUsuario(nombreGuardado);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("equipoSeleccionado", equipoFilter);
+      localStorage.setItem("isLogged", isLogged);
+      localStorage.setItem("nombreUsuario", nombreUsuario);
+    }
+  }, [equipoFilter, isLogged]);
+
+  useEffect(() => {
+    const resetLlamadasSiCambioMes = async () => {
+      if (typeof window === "undefined") return;
+
+      const mesActual = new Date().getMonth();
+      const mesGuardado = localStorage.getItem("mesActual");
+
+      if (mesGuardado === null) {
+        // Primera vez que corre: no borra nada, solo guarda el mes actual
+        localStorage.setItem("mesActual", mesActual.toString());
+        return;
+      }
+
+      if (parseInt(mesGuardado) !== mesActual) {
+        try {
+          const snapshot = await getDocs(collection(db, "empresas"));
+          const nuevasEmpresas = [];
+
+          for (const docSnap of snapshot.docs) {
+            const empresaData = docSnap.data();
+            const nuevaEmpresa = { ...empresaData, llamadas: [] };
+            await setDoc(doc(db, "empresas", docSnap.id), nuevaEmpresa);
+            nuevasEmpresas.push(nuevaEmpresa);
+          }
+
+          setData(nuevasEmpresas);
+          localStorage.setItem("mesActual", mesActual.toString());
+          toast.success("Llamadas reiniciadas automáticamente por cambio de mes.");
+        } catch (error) {
+          console.error("Error al resetear llamadas:", error);
+          toast.error("Error al reiniciar las llamadas.");
+        }
+      }
+    };
+
+    resetLlamadasSiCambioMes();
+  }, []);
+
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "empresas"));
+        const firebaseData = querySnapshot.docs.map((doc) => doc.data());
+        setData(firebaseData);
+      } catch (error) {
+        console.error("Error fetching data from Firebase:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const ordenGuardado = localStorage.getItem("orden");
+    if (ordenGuardado) {
+      setOrden(ordenGuardado);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("orden", orden);
+  }, [orden]);
+
+  useEffect(() => {
+    const handleOutsideOrEsc = (event) => {
+      if (
+        (event.type === "mousedown" && menuEmpresasRef.current && !menuEmpresasRef.current.contains(event.target)) ||
+        (event.type === "keydown" && event.key === "Escape")
+      ) {
+        setMenuEmpresasVisible(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideOrEsc);
+    document.addEventListener("keydown", handleOutsideOrEsc);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideOrEsc);
+      document.removeEventListener("keydown", handleOutsideOrEsc);
+    };
+  }, []);
+
+
+  useEffect(() => {
+    const handleOutsideOrEsc = (event) => {
+      if (event.type === "mousedown") {
+        if (menuUsuariosRef.current && !menuUsuariosRef.current.contains(event.target)) {
+          setMenuVisible(false);
+        }
+      }
+
+      if (event.type === "keydown" && event.key === "Escape") {
+        setMenuVisible(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideOrEsc);
+    document.addEventListener("keydown", handleOutsideOrEsc);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideOrEsc);
+      document.removeEventListener("keydown", handleOutsideOrEsc);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!modalEditOpen) {
+      // Solo limpiar si el modal se cierra
+      setTimeout(() => {
+        setEmpresaSeleccionada("");
+        setNuevoNombreEmpresa("");
+      }, 100); // retraso para no interferir con la apertura
+    }
+  }, [modalEditOpen]);
+
+  useEffect(() => {
+    if (!modalDeleteOpen) {
+      setTimeout(() => {
+        setEmpresaSeleccionada("");
+      }, 100);
+    }
+  }, [modalDeleteOpen]);
+
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === "Escape") {
+        setModalEditOpen(false);
+        setEmpresaSeleccionada("");
+        setNuevoNombreEmpresa("");
+      }
+    };
+
+    if (modalEditOpen) {
+      document.addEventListener("keydown", handleEsc);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, [modalEditOpen]);
+
+
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === "Escape") {
+        setModalDeleteOpen(false);
+        setEmpresaSeleccionada("");
+      }
+    };
+
+    if (modalDeleteOpen) {
+      document.addEventListener("keydown", handleEsc);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, [modalDeleteOpen]);
+
 
 
   if (!isLogged) {
@@ -480,8 +719,145 @@ export default function App() {
 
         {/* Usuario e íconos a la derecha */}
         <div className="absolute right-0 flex gap-3 items-center">
+          {/* Botón Usuarios (solo Flexxus) */}
+          {nombreUsuario === "Flexxus" && (
+            <div ref={menuUsuariosRef} className="relative">
+              <button
+                onClick={() => setMenuVisible(!menuVisible)}
+                className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded flex items-center gap-2"
+              >
+                <User size={18} />
+                <span>Usuarios</span>
+              </button>
+              {menuVisible && (
+                <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded shadow-lg z-50">
+
+                  <button
+                    onClick={() => {
+                      setMostrarFormularioUsuario(true);
+                      setMenuVisible(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-green-400 hover:bg-gray-700"
+                  >
+                    <div className="flex items-center gap-2">
+                      <UserPlus size={18} />
+                      <span>Nuevo Usuario</span>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      obtenerUsuarios();
+                      setMostrarModificarUsuario(true);
+                      setMenuVisible(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-yellow-400 hover:bg-gray-700"
+                  >
+                    <div className="flex items-center gap-2">
+                      <UserCog size={18} /><span>Modificar Usuario</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      obtenerUsuarios();
+                      setMostrarEliminarUsuario(true);
+                      setMenuVisible(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700"
+                  >
+                    <div className="flex items-center gap-2">
+                      <UserMinus size={18} /><span>Eliminar Usuario</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      exportarUsuarios();
+                      setMenuVisible(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-blue-400 hover:bg-gray-700"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileSpreadsheet size={18} /><span>Exportar Usuarios</span>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Botón Empresas (si está logueado) */}
+          {isLogged && nombreUsuario === "Flexxus" && (
+            <div ref={menuEmpresasRef} className="relative">
+              <button
+                onClick={() => setMenuEmpresasVisible(!menuEmpresasVisible)}
+                className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded flex items-center gap-2"
+              >
+                <Briefcase size={18} />
+                <span>Clientes</span>
+              </button>
+              {menuEmpresasVisible && (
+                <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded shadow-lg z-50">
+                  <button
+                    onClick={() => {
+                      handleAddEmpresa();
+                      setMenuEmpresasVisible(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-blue-400 hover:bg-gray-700"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Plus size={18} />
+                      <span>Nuevo Cliente</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      obtenerEmpresas(); // Nueva función para cargar lista
+                      setModalEditOpen(true);
+                      setMenuEmpresasVisible(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-yellow-400 hover:bg-gray-700"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Pencil size={18} />
+                      <span>Modificar Cliente</span>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      obtenerEmpresas();
+                      setModalDeleteOpen(true);
+                      setMenuEmpresasVisible(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Trash2 size={18} />
+                      <span>Eliminar Cliente</span>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      fileInputRef.current?.click();
+                      setMenuEmpresasVisible(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-green-400 hover:bg-gray-700"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileSpreadsheet size={18} />
+                      <span>Importar Excel</span>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+
+          {/* Nombre + Cambiar contraseña */}
           {nombreUsuario && (
-            <div className="flex items-center gap-2 mr-2">
+            <div className="flex items-center gap-2 ml-2">
               <span className="text-gray-200 font-semibold">{nombreUsuario}</span>
               <KeyRound
                 size={18}
@@ -495,6 +871,8 @@ export default function App() {
               />
             </div>
           )}
+
+          {/* Login / Logout */}
           {isLogged ? (
             <LogOut
               className="text-red-400 cursor-pointer hover:text-red-600"
@@ -508,23 +886,34 @@ export default function App() {
               onClick={() => setLoginModal(true)}
             />
           )}
+
         </div>
       </div>
+
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+          {/* Filtro Empresa */}
           <div className="flex items-center bg-gray-700 border border-gray-600 rounded-2xl-md px-2">
             <Building size={18} className="text-gray-200 mr-2" />
-            <input type="text" placeholder="Filtrar por empresa" value={empresaFilter}
+            <input
+              type="text"
+              placeholder="Filtrar por Cliente"
+              value={empresaFilter}
               onChange={(e) => setEmpresaFilter(e.target.value)}
-              className="bg-transparent outline-none text-gray-200 p-2 w-full" />
+              className="bg-transparent outline-none text-gray-200 p-2 w-full"
+            />
           </div>
+
+          {/* Filtro Equipo */}
           <div className="flex items-center bg-gray-700 border border-gray-600 rounded-2xl-md px-2">
             <Users size={18} className="text-gray-200 mr-2" />
             <select
               value={equipoFilter}
               onChange={(e) => setEquipoFilter(e.target.value)}
-              disabled={!isFlexxus} // ← deshabilita si no es Flexxus
-              className={`bg-gray-700 text-gray-200 border-none p-2 w-full appearance-none ${!isFlexxus ? "opacity-60 cursor-not-allowed" : ""}`}
+              disabled={!isFlexxus}
+              className={`bg-gray-700 text-gray-200 border-none p-2 w-full appearance-none ${!isFlexxus ? "opacity-60 cursor-not-allowed" : ""
+                }`}
             >
               <option value="">Todos los equipos</option>
               <option value="Equipo 1">Equipo 1</option>
@@ -535,36 +924,22 @@ export default function App() {
               <option value="Equipo Corralon">Equipo Corralon</option>
             </select>
           </div>
-          {isLogged && (
-            <Button
-              className="bg-blue-600 text-gray-200 px-4 py-2 rounded-2xl hover:bg-blue-700 focus:ring-2 focus:ring-blue-400"
-              onClick={handleAddEmpresa}
+
+
+
+
+          <div className="flex items-center gap-2 ml-auto">
+            <SortDesc size={20} className="text-gray-300" />
+            <select
+              value={orden}
+              onChange={(e) => setOrden(e.target.value)}
+              className="bg-gray-700 text-gray-200 border border-gray-600 rounded-2xl px-3 py-1"
             >
-              + Nueva Empresa
-            </Button>
-          )}
-        </div>
-        {isLogged && nombreUsuario === "Flexxus" && (
-          <div className="relative group">
-            <input type="file" id="excelUpload" accept=".xlsx, .xls" onChange={handleFileUpload} className="hidden" />
-            <label htmlFor="excelUpload" className="cursor-pointer hover:scale-110 transition-transform duration-200">
-              <FileSpreadsheet size={36} className="text-green-400" />
-            </label>
+              <option value="nombre">Nombre empresa</option>
+              <option value="llamadas">Llamadas realizadas</option>
+            </select>
           </div>
-        )}
-
-        <div className="flex items-center gap-2 ml-auto">
-          <SortDesc size={20} className="text-gray-300" />
-          <select
-            value={orden}
-            onChange={(e) => setOrden(e.target.value)}
-            className="bg-gray-700 text-gray-200 border border-gray-600 rounded-2xl px-3 py-1"
-          >
-            <option value="nombre">Nombre empresa</option>
-            <option value="llamadas">Llamadas realizadas</option>
-          </select>
         </div>
-
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-start auto-rows-min grid-flow-dense">
@@ -577,31 +952,6 @@ export default function App() {
                 <CardContent className="relative">
                   <h2 className="text-xl font-bold text-ellipsis overflow-hidden whitespace-nowrap" title={item.empresa}>{item.empresa}</h2>
                   <p>Llamadas Realizadas: {item.llamadas.length} </p>
-
-                  {isLogged && (nombreUsuario === "Flexxus") && (
-                    <div className="absolute top-2 right-2 flex items-center gap-2">
-                      <span
-                        className="cursor-pointer"
-                        title="EDITAR EMPRESA"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditEmpresa(item.empresa)
-                        }}
-                      >
-                        <Pencil size={20} className="text-gray-200 hover:scale-110 transition-transform duration-200" />
-                      </span>
-                      <span
-                        className="cursor-pointer"
-                        title="ELIMINAR EMPRESA"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteEmpresa(item.empresa)
-                        }}
-                      >
-                        <Trash2 size={20} className="text-gray-200 hover:scale-110 transition-transform duration-200" />
-                      </span>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             </div>
@@ -609,6 +959,7 @@ export default function App() {
         })}
 
       </div>
+
 
       {
         modalOpen && selectedEmpresaData && (
@@ -766,7 +1117,7 @@ export default function App() {
         modalAddOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
             <div className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 p-6 rounded-2xl-lg w-full max-w-md">
-              <h2 className="text-xl font-bold mb-4">Agregar nueva empresa</h2>
+              <h2 className="text-xl font-bold mb-4">Nuevo Cliente</h2>
               <input
                 type="text"
                 value={nuevoNombreEmpresa}
@@ -816,41 +1167,114 @@ export default function App() {
       }
 
       {/* MODAL EDITAR EMPRESA */}
-      {
-        modalEditOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
-            <div className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 p-6 rounded-2xl-lg w-full max-w-md">
-              <h2 className="text-xl font-bold mb-4">Editar nombre de empresa</h2>
-              <input
-                type="text"
-                value={nuevoNombreEmpresa}
-                onChange={(e) => setNuevoNombreEmpresa(e.target.value)}
-                className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full p-2 rounded-2xl bg-gray-700 text-gray-200 mb-4"
-              />
-              <div className="flex justify-end gap-2">
-                <button onClick={() => setModalEditOpen(false)} className="bg-red-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-red-600 focus:ring-2 focus:ring-red-400">Cancelar</button>
-                <button onClick={confirmEditEmpresa} className="bg-yellow-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-yellow-600">Guardar</button>
-              </div>
+      {modalEditOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
+          <div className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 p-6 rounded-2xl-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4 text-white">Modificar Empresa</h2>
+
+            {/* Select de empresas */}
+            <select
+              value={empresaSeleccionada}
+              onChange={(e) => {
+                const seleccionada = e.target.value;
+                setEmpresaSeleccionada(seleccionada);
+                setNuevoNombreEmpresa(seleccionada);
+              }}
+              className="w-full p-2 mb-4 rounded bg-gray-600 text-white"
+            >
+              <option value="">Seleccione una empresa</option>
+              {data.map((empresa) => (
+                <option key={empresa.empresa} value={empresa.empresa}>
+                  {empresa.empresa}
+                </option>
+              ))}
+            </select>
+
+            {/* Input editable */}
+            <input
+              type="text"
+              value={nuevoNombreEmpresa}
+              onChange={(e) => setNuevoNombreEmpresa(e.target.value)}
+              className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full p-2 rounded-2xl bg-gray-700 text-gray-200 mb-4"
+              disabled={!empresaSeleccionada}
+              placeholder="Nuevo nombre de empresa"
+            />
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setModalEditOpen(false)}
+                className="bg-red-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-red-600 focus:ring-2 focus:ring-red-400"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmEditEmpresa}
+                disabled={!nuevoNombreEmpresa.trim() || !empresaSeleccionada}
+                className={`px-4 py-2 rounded-2xl text-gray-200 ${nuevoNombreEmpresa.trim() && empresaSeleccionada
+                  ? "bg-yellow-500 hover:bg-yellow-600"
+                  : "bg-yellow-500 opacity-50 cursor-not-allowed"
+                  }`}
+              >
+                Guardar
+              </button>
             </div>
           </div>
-        )
-      }
+        </div>
+      )}
+
 
       {/* MODAL ELIMINAR EMPRESA */}
       {
         modalDeleteOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
             <div className="border border-gray-500 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 p-6 rounded-2xl-lg w-full max-w-md">
-              <h2 className="text-xl font-bold mb-4 text-red-400">Eliminar empresa</h2>
-              <p className="text-gray-200 mb-6">¿Estás seguro de que querés eliminar "{empresaSeleccionada}"?</p>
+              <h2 className="text-xl font-bold mb-4 text-white">Eliminar Empresa</h2>
+
+              {/* Select de empresas */}
+              <select
+                value={empresaSeleccionada}
+                onChange={(e) => setEmpresaSeleccionada(e.target.value)}
+                className="w-full p-2 mb-4 rounded bg-gray-600 text-white"
+              >
+                <option value="">Seleccione una empresa</option>
+                {data.map((empresa) => (
+                  <option key={empresa.empresa} value={empresa.empresa}>
+                    {empresa.empresa}
+                  </option>
+                ))}
+              </select>
+
+              {/* Advertencia */}
+              {empresaSeleccionada && (
+                <div className="bg-red-500 bg-opacity-20 p-3 rounded mb-4 text-white">
+                  ¿Estás seguro de que querés eliminar <strong>{empresaSeleccionada}</strong>? Esta acción no se puede deshacer.
+                </div>
+              )}
+
               <div className="flex justify-end gap-2">
-                <button onClick={() => setModalDeleteOpen(false)} className="bg-gray-500 text-gray-200 px-4 py-2 rounded-2xl hover:bg-gray-600">Cancelar</button>
-                <button onClick={confirmDeleteEmpresa} className="bg-red-600 text-gray-200 px-4 py-2 rounded-2xl hover:bg-red-700">Eliminar</button>
+                <button
+                  onClick={() => setModalDeleteOpen(false)}
+                  className="bg-gray-500 text-white px-4 py-2 rounded-2xl hover:bg-gray-600"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmDeleteEmpresa}
+                  disabled={!empresaSeleccionada}
+                  className={`px-4 py-2 rounded-2xl text-white ${empresaSeleccionada
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-red-600 opacity-50 cursor-not-allowed"
+                    }`}
+                >
+                  Eliminar
+                </button>
               </div>
             </div>
           </div>
         )
       }
+
+
 
       {
         modalPasswordOpen && (
@@ -903,8 +1327,201 @@ export default function App() {
         )
       }
 
+      {
+        mostrarFormularioUsuario && (
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+            <div className="bg-gray-800 p-6 rounded-xl w-full max-w-md relative">
+              <button onClick={() => setMostrarFormularioUsuario(false)} className="absolute top-2 right-3 text-white text-xl">×</button>
+              <h2 className="text-xl text-white mb-4 font-bold">Agregar Usuario</h2>
+
+              <div className="mb-3">
+                <label className="block text-white text-sm mb-1">Nombre Usuario (Nombre y Apellido)</label>
+                <input
+                  type="text"
+                  value={nuevoUsuario.nombre}
+                  onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, nombre: e.target.value })}
+                  className="w-full p-2 rounded bg-gray-600 text-white"
+                  placeholder="Ej: Juan Pérez"
+                />
+              </div>
+
+              <div className="mb-3">
+                <label className="block text-white text-sm mb-1">Usuario</label>
+                <input
+                  type="text"
+                  value={nuevoUsuario.usuario}
+                  onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, usuario: e.target.value })}
+                  className="w-full p-2 rounded bg-gray-600 text-white"
+                  placeholder="Ej: juanperez"
+                />
+              </div>
+
+              <div className="mb-3">
+                <label className="block text-white text-sm mb-1">Contraseña</label>
+                <input
+                  type="text"
+                  value={nuevoUsuario.password}
+                  onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, password: e.target.value })}
+                  className="w-full p-2 rounded bg-gray-600 text-white"
+                  placeholder="******"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-white text-sm mb-1">Equipo</label>
+                <select
+                  value={nuevoUsuario.equipo}
+                  onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, equipo: e.target.value })}
+                  className="w-full p-2 rounded bg-gray-600 text-white"
+                >
+                  <option value="">Seleccionar equipo</option>
+                  <option value="Equipo 1">Equipo 1</option>
+                  <option value="Equipo 2">Equipo 2</option>
+                  <option value="Equipo 3">Equipo 3</option>
+                  <option value="Equipo 4">Equipo 4</option>
+                  <option value="Equipo 5">Equipo 5</option>
+                  <option value="Equipo Corralon">Equipo Corralon</option>
+                </select>
+              </div>
+
+              <Button
+                onClick={() => {
+                  if (!nuevoUsuario.nombre || !nuevoUsuario.usuario || !nuevoUsuario.password || !nuevoUsuario.equipo) {
+                    toast.error("Todos los campos son obligatorios");
+                    return;
+                  }
+                  agregarUsuario(nuevoUsuario);
+                  setMostrarFormularioUsuario(false);
+                  setNuevoUsuario({ nombre: "", usuario: "", password: "", equipo: "" });
+                }}
+                className="bg-blue-600 text-white w-full py-2 rounded"
+              >
+                Guardar Usuario
+              </Button>
+            </div>
+          </div>
+        )
+      }
+
+      {
+        mostrarEliminarUsuario && (
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+            <div className="bg-gray-800 p-6 rounded-xl w-full max-w-md relative">
+              <button onClick={() => setMostrarEliminarUsuario(false)} className="absolute top-2 right-3 text-white text-xl">×</button>
+              <h2 className="text-xl text-white mb-4 font-bold">Eliminar Usuario</h2>
+
+              <select
+                value={usuarioAEliminar?.id || ""}
+                onChange={(e) => {
+                  const seleccionado = usuariosDisponibles.find(u => u.id === e.target.value);
+                  setUsuarioAEliminar(seleccionado || null);
+                }}
+                className="w-full p-2 rounded bg-gray-600 text-white mb-4"
+              >
+                <option value="">Seleccione un usuario</option>
+                {usuariosDisponibles
+                  .filter((u) => u.id !== "flexxus")
+                  .map((u) => (
+                    <option key={u.id} value={u.id}>{u.nombre}</option>
+                  ))}
+              </select>
+
+              {usuarioAEliminar && (
+                <div className="bg-red-500 bg-opacity-20 p-3 rounded mb-4 text-white">
+                  ¿Estás seguro que querés eliminar a <strong>{usuarioAEliminar.nombre}</strong>? Esta acción no se puede deshacer.
+                </div>
+              )}
+
+              <Button
+                disabled={!usuarioAEliminar}
+                onClick={() => confirmarEliminacionUsuario()}
+                className="bg-red-600 text-white w-full py-2 rounded disabled:opacity-50"
+              >
+                Eliminar Usuario
+              </Button>
+            </div>
+          </div>
+        )
+      }
+
+      {
+        mostrarModificarUsuario && (
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+            <div className="bg-gray-800 p-6 rounded-xl w-full max-w-md relative">
+              <button onClick={() => setMostrarModificarUsuario(false)} className="absolute top-2 right-3 text-white text-xl">×</button>
+              <h2 className="text-xl text-white mb-4 font-bold">Modificar Usuario</h2>
+
+              <select
+                value={usuarioSeleccionado?.id || ""}
+                onChange={(e) => {
+                  const seleccionado = usuariosDisponibles.find(u => u.id === e.target.value);
+                  setUsuarioSeleccionado(seleccionado || null);
+                }}
+                className="w-full p-2 rounded bg-gray-600 text-white mb-4"
+              >
+                <option value="">Seleccione un usuario</option>
+                {usuariosDisponibles
+                  .filter((u) => u.id !== "flexxus")
+                  .map((u) => (
+                    <option key={u.id} value={u.id}>{u.nombre}</option>
+                  ))}
+              </select>
+
+              {usuarioSeleccionado && (
+                <>
+                  <input
+                    type="text"
+                    className="w-full p-2 rounded bg-gray-600 text-white mb-2"
+                    placeholder="Nombre"
+                    value={usuarioSeleccionado.nombre}
+                    onChange={(e) => setUsuarioSeleccionado({ ...usuarioSeleccionado, nombre: e.target.value })}
+                  />
+                  <input
+                    type="text"
+                    className="w-full p-2 rounded bg-gray-600 text-white mb-2"
+                    placeholder="Usuario"
+                    value={usuarioSeleccionado.usuario}
+                    onChange={(e) => setUsuarioSeleccionado({ ...usuarioSeleccionado, usuario: e.target.value.toLowerCase() })}
+                  />
+                  <input
+                    type="text"
+                    className="w-full p-2 rounded bg-gray-600 text-white mb-2"
+                    placeholder="Contraseña"
+                    value={usuarioSeleccionado.password}
+                    onChange={(e) => setUsuarioSeleccionado({ ...usuarioSeleccionado, password: e.target.value })}
+                  />
+                  <select
+                    className="w-full p-2 rounded bg-gray-600 text-white mb-4"
+                    value={usuarioSeleccionado.equipo}
+                    onChange={(e) => setUsuarioSeleccionado({ ...usuarioSeleccionado, equipo: e.target.value })}
+                  >
+                    <option value="">Seleccionar equipo</option>
+                    <option value="Equipo 1">Equipo 1</option>
+                    <option value="Equipo 2">Equipo 2</option>
+                    <option value="Equipo 3">Equipo 3</option>
+                    <option value="Equipo 4">Equipo 4</option>
+                    <option value="Equipo 5">Equipo 5</option>
+                    <option value="Equipo Corralon">Equipo Corralon</option>
+                  </select>
+
+                  <Button
+                    onClick={() => guardarCambiosUsuario()}
+                    className="bg-yellow-500 text-white w-full py-2 rounded"
+                  >
+                    Guardar Cambios
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        )
+      }
+
+
+
     </div >
 
   );
+
 
 }
