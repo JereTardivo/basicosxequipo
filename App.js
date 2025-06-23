@@ -4,14 +4,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as XLSX from "xlsx";
 import { db } from "./firebase";
-import {
-  collection,
-  getDocs,
-  setDoc,
-  doc,
-  deleteDoc,
-  getDoc
-} from "firebase/firestore";
+import { collection, getDocs, setDoc, doc, deleteDoc, getDoc, onSnapshot } from "firebase/firestore";
 import { Pencil, Trash2, UserMinus, FileSpreadsheet, LogIn, LogOut, Building, Users, KeyRound, SortDesc, User, Briefcase, UserPlus, UserCog, Plus } from "lucide-react";
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
@@ -20,12 +13,6 @@ import { Toaster, toast } from 'react-hot-toast';
 export default function App() {
   const [data, setData] = useState([]);
   const [empresaFilter, setEmpresaFilter] = useState("");
-  const [equipoFilter, setEquipoFilter] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("equipoSeleccionado") || "";
-    }
-    return "";
-  });
   const [modalOpen, setModalOpen] = useState(false);
   const [formValues, setFormValues] = useState({ motivo: "", descripcion: "", ticket: "" });
   const [selectedEmpresa, setSelectedEmpresa] = useState(null);
@@ -47,20 +34,11 @@ export default function App() {
   const [editandoIndex, setEditandoIndex] = useState(null);
   const [editLlamada, setEditLlamada] = useState({ motivo: "", descripcion: "", ticket: "" });
   const [modalPasswordOpen, setModalPasswordOpen] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({
-    actual: "",
-    nueva: "",
-    repetir: ""
-  });
+  const [passwordForm, setPasswordForm] = useState({ actual: "", nueva: "", repetir: "" });
   const [passwordError, setPasswordError] = useState("");
   const [orden, setOrden] = useState("nombre");
   const [mostrarFormularioUsuario, setMostrarFormularioUsuario] = useState(false);
-  const [nuevoUsuario, setNuevoUsuario] = useState({
-    nombre: "",
-    usuario: "",
-    password: "",
-    equipo: ""
-  });
+  const [nuevoUsuario, setNuevoUsuario] = useState({ nombre: "", usuario: "", password: "", equipo: "" });
   const [mostrarEliminarUsuario, setMostrarEliminarUsuario] = useState(false);
   const [usuariosDisponibles, setUsuariosDisponibles] = useState([]);
   const [usuarioAEliminar, setUsuarioAEliminar] = useState(null);
@@ -68,6 +46,13 @@ export default function App() {
   const [mostrarModificarUsuario, setMostrarModificarUsuario] = useState(false);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
   const [menuEmpresasVisible, setMenuEmpresasVisible] = useState(false);
+
+  const [equipoFilter, setEquipoFilter] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("equipoSeleccionado") || "";
+    }
+    return "";
+  });
 
   const fileInputRef = useRef(null);
   const menuEmpresasRef = useRef(null);
@@ -482,8 +467,6 @@ export default function App() {
   //USE EFFECTS
 
 
-
-
   useEffect(() => {
     if (typeof window !== "undefined") {
       const equipoGuardado = localStorage.getItem("equipoSeleccionado");
@@ -541,19 +524,13 @@ export default function App() {
     resetLlamadasSiCambioMes();
   }, []);
 
-
-
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "empresas"));
-        const firebaseData = querySnapshot.docs.map((doc) => doc.data());
-        setData(firebaseData);
-      } catch (error) {
-        console.error("Error fetching data from Firebase:", error);
-      }
-    };
-    fetchData();
+    const unsubscribe = onSnapshot(collection(db, "empresas"), (snapshot) => {
+      const firebaseData = snapshot.docs.map((doc) => doc.data());
+      setData(firebaseData);
+    });
+
+    return () => unsubscribe(); // Limpia el listener al desmontar
   }, []);
 
   useEffect(() => {
@@ -663,7 +640,7 @@ export default function App() {
     };
   }, [modalDeleteOpen]);
 
-   useEffect(() => {
+  useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === "Escape") {
         setModalOpen(false);
