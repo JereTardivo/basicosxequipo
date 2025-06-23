@@ -627,6 +627,7 @@ export default function App() {
                           <p className="text-sm text-gray-300 mb-1">Motivo</p>
                           <input
                             type="text"
+                            maxLength={50}
                             value={editLlamada.motivo}
                             onChange={(e) => setEditLlamada({ ...editLlamada, motivo: e.target.value })}
                             className="w-full p-1 mb-1 rounded bg-gray-600 text-white"
@@ -635,11 +636,20 @@ export default function App() {
                           <p className="text-sm text-gray-300 mb-1">Descripción</p>
                           <textarea
                             rows="2"
+                            maxLength={250}
                             value={editLlamada.descripcion}
-                            onChange={(e) => setEditLlamada({ ...editLlamada, descripcion: e.target.value })}
+                            onChange={(e) => {
+                              const texto = e.target.value;
+                              if (texto.length <= 250) {
+                                setEditLlamada({ ...editLlamada, descripcion: texto });
+                              }
+                            }}
                             className="w-full p-1 mb-1 rounded bg-gray-600 text-white"
                             placeholder="Descripción"
                           />
+                          <p className={`text-sm text-right ${editLlamada.descripcion.length >= 250 ? 'text-red-400' : 'text-gray-400'}`}>
+                            {editLlamada.descripcion.length}/250
+                          </p>
                           <p className="text-sm text-gray-300 mb-1">Ticket</p>
                           <input
                             type="text"
@@ -686,9 +696,34 @@ export default function App() {
               {selectedEmpresaData.llamadas.length < 5 && (
                 <div className="space-y-3">
                   <strong><u>Nueva Llamada:</u></strong><br />
-                  <input type="text" placeholder="Motivo" className="w-full p-2 rounded bg-gray-600 text-white" value={formValues.motivo} onChange={(e) => setFormValues({ ...formValues, motivo: e.target.value })} />
-                  <textarea placeholder="Descripción" className="w-full p-2 rounded bg-gray-600 text-white" rows="3" value={formValues.descripcion} onChange={(e) => setFormValues({ ...formValues, descripcion: e.target.value })} />
-                  <input type="text" placeholder="Ticket (6 dígitos)" className="w-full p-2 rounded bg-gray-600 text-white" maxLength={6} value={formValues.ticket} onChange={(e) => setFormValues({ ...formValues, ticket: e.target.value.replace(/[^0-9]/g, "") })} />
+                  <input
+                    type="text"
+                    maxLength={50}
+                    placeholder="Motivo"
+                    className="w-full p-2 rounded bg-gray-600 text-white"
+                    value={formValues.motivo}
+                    onChange={(e) => setFormValues({ ...formValues, motivo: e.target.value })} />
+                  <textarea
+                    placeholder="Descripción"
+                    className="w-full p-2 rounded bg-gray-600 text-white"
+                    rows="3"
+                    maxLength={250}
+                    value={formValues.descripcion}
+                    onChange={(e) => {
+                      const texto = e.target.value;
+                      if (texto.length <= 250) {
+                        setFormValues({ ...formValues, descripcion: texto });
+                      }
+                    }}
+                  />
+                  <p className={`text-sm text-right ${formValues.descripcion.length >= 250 ? 'text-red-400' : 'text-gray-400'}`}>
+                    {formValues.descripcion.length}/250
+                  </p>
+                  <input
+                    type="text"
+                    placeholder="Ticket (6 dígitos)"
+                    className="w-full p-2 rounded bg-gray-600 text-white"
+                    maxLength={6} value={formValues.ticket} onChange={(e) => setFormValues({ ...formValues, ticket: e.target.value.replace(/[^0-9]/g, "") })} />
                   {Object.values(errors).map((err, i) => (<p key={i} className="text-red-400 text-sm">{err}</p>))}
                   <div className="flex justify-end gap-2">
                     <Button onClick={() => setModalOpen(false)} className="bg-red-500 text-white">Cancelar</Button>
