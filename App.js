@@ -46,6 +46,9 @@ export default function App() {
   const [mostrarModificarUsuario, setMostrarModificarUsuario] = useState(false);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
   const [menuEmpresasVisible, setMenuEmpresasVisible] = useState(false);
+  const [mesesDisponibles, setMesesDisponibles] = useState([]);
+  const [mostrarInformes, setMostrarInformes] = useState(false);
+  const [mesSeleccionado, setMesSeleccionado] = useState("");
 
   const [equipoFilter, setEquipoFilter] = useState(() => {
     if (typeof window !== "undefined") {
@@ -86,6 +89,7 @@ export default function App() {
     setNombreUsuario("");
     localStorage.removeItem("isLogged");
     localStorage.removeItem("equipoSeleccionado");
+    localStorage.removeItem("isFlexxus");
   };
 
   const handleLogin = async () => {
@@ -101,8 +105,10 @@ export default function App() {
           setUserDocId(data.usuario);
           setEquipoFilter(data.equipo || "");
           setIsFlexxus(!data.equipo);
+          localStorage.setItem("isFlexxus", (!data.equipo).toString());
           setLoginError("");
           setLoginModal(false);
+          cargarMesesDisponibles();
         } else {
           setLoginError("Contraseña incorrecta.");
         }
@@ -148,6 +154,33 @@ export default function App() {
     reader.readAsBinaryString(file);
   };
 
+  const cargarMesesDisponibles = async () => {
+    const snapshot = await getDocs(collection(db, "empresas"));
+    const mesesSet = new Set();
+
+    snapshot.forEach((docu) => {
+      const empresaData = docu.data();
+      empresaData.llamadas?.forEach((llamada) => {
+        if (llamada.mes) {
+          mesesSet.add(llamada.mes);
+        }
+      });
+    });
+
+    const mesesUnicos = Array.from(mesesSet).sort((a, b) => {
+      const [mesA, añoA] = a.split(" ");
+      const [mesB, añoB] = b.split(" ");
+      const mesesOrden = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+      return (
+        parseInt(añoA) - parseInt(añoB) ||
+        mesesOrden.indexOf(mesA.toLowerCase()) - mesesOrden.indexOf(mesB.toLowerCase())
+      );
+    });
+
+    setMesesDisponibles(mesesUnicos);
+  };
+
+
   const handleAddLlamadaClick = (empresa) => {
     setSelectedEmpresa(empresa);
     setFormValues({ motivo: "", descripcion: "", ticket: "" });
@@ -175,7 +208,8 @@ export default function App() {
 
     const updated = data.map((item) => {
       if (item.empresa === selectedEmpresa && item.llamadas.length < 5) {
-        const nuevas = [...item.llamadas, { ...formValues, agente: nombreUsuario }];
+        const mesActual = new Date().toLocaleString("default", { month: "long", year: "numeric" });
+        const nuevas = [...item.llamadas, { ...formValues, agente: nombreUsuario, mes: mesActual }];
         const updatedItem = { ...item, llamadas: nuevas };
         const docId = item.empresa;
         setDoc(doc(db, "empresas", docId), updatedItem);
@@ -186,6 +220,36 @@ export default function App() {
 
     setData(updated);
     setModalOpen(false);
+  };
+
+  const exportarLlamadasPorMes = async (mesSeleccionado) => {
+    const snapshot = await getDocs(collection(db, "empresas"));
+    const llamadasFiltradas = [];
+
+    snapshot.forEach((docu) => {
+      const empresaData = docu.data();
+
+      // Filtrar las llamadas de este mes
+      const llamadasMes = empresaData.llamadas?.filter((llamada) => llamada.mes === mesSeleccionado) || [];
+
+      llamadasMes.forEach((llamada) => {
+        llamadasFiltradas.push({
+          Empresa: empresaData.empresa,
+          Equipo: empresaData.equipo,
+          Agente: llamada.agente || "",
+          Motivo: llamada.motivo,
+          Descripción: llamada.descripcion,
+          Ticket: llamada.ticket,
+          Mes: llamada.mes,
+          "Cantidad de llamadas en el mes": llamadasMes.length,
+        });
+      });
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(llamadasFiltradas);
+    XLSX.utils.book_append_sheet(wb, ws, `Llamadas ${mesSeleccionado}`);
+    XLSX.writeFile(wb, `informe_llamadas_${mesSeleccionado}.xlsx`);
   };
 
   const filteredData = data.filter((item) => {
@@ -307,9 +371,9 @@ export default function App() {
 
   const guardarEdicion = async (index) => {
     const empresaActual = selectedEmpresa;
-
+    const mesActual = new Date().toLocaleString("default", { month: "long", year: "numeric" });
     const nuevasLlamadas = [...selectedEmpresaData.llamadas];
-    nuevasLlamadas[index] = { ...editLlamada, agente: nuevasLlamadas[index].agente };
+    nuevasLlamadas[index] = { ...editLlamada, agente: nuevasLlamadas[index].agente, mes: mesActual };
 
     const empresaActualizada = {
       ...selectedEmpresaData,
@@ -470,11 +534,13 @@ export default function App() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const equipoGuardado = localStorage.getItem("equipoSeleccionado");
-      const logueado = localStorage.getItem("isLogged") === "true";
       if (equipoGuardado) setEquipoFilter(equipoGuardado);
+      const logueado = localStorage.getItem("isLogged") === "true";
       if (logueado) setIsLogged(true);
       const nombreGuardado = localStorage.getItem("nombreUsuario");
       if (nombreGuardado) setNombreUsuario(nombreGuardado);
+      const flexxusGuardado = localStorage.getItem("isFlexxus") === "true";
+      setIsFlexxus(flexxusGuardado);
     }
   }, []);
 
@@ -657,6 +723,22 @@ export default function App() {
     };
   }, [setModalOpen]);
 
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === "Escape") {
+        setMostrarInformes(false);
+      }
+    };
+
+    if (setMostrarInformes) {
+      document.addEventListener("keydown", handleEsc);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, [setMostrarInformes]);
+
 
 
   if (!isLogged) {
@@ -713,6 +795,23 @@ export default function App() {
 
         {/* Usuario e íconos a la derecha */}
         <div className="absolute right-0 flex gap-3 items-center">
+
+          {isLogged && isFlexxus && (
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setMesSeleccionado("");
+                  setMostrarInformes(true);
+                }}
+                className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded flex items-center gap-2"
+              >
+                <FileSpreadsheet size={18} />
+                <span>Informes</span>
+              </button>
+            </div>
+          )}
+
+
           {/* Botón Usuarios (solo Flexxus) */}
           {nombreUsuario === "Flexxus" && (
             <div ref={menuUsuariosRef} className="relative">
@@ -1515,6 +1614,55 @@ export default function App() {
           </div>
         )
       }
+
+      {mostrarInformes && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="bg-gray-700 p-6 rounded-2xl w-full max-w-sm relative">
+            <button
+              onClick={() => setMostrarInformes(false)}
+              className="absolute top-2 right-3 text-white text-xl"
+            >
+              ×
+            </button>
+            <h2 className="text-xl font-bold mb-4 text-white">Llamadas Mensuales</h2>
+
+            <label className="text-white text-sm mb-1 block">Seleccioná el mes</label>
+            <select
+              onChange={(e) => setMesSeleccionado(e.target.value)}
+              value={mesSeleccionado}
+              className="w-full p-2 mb-4 rounded bg-gray-600 text-white"
+            >
+              <option value="">-- Elegí un mes --</option>
+              {mesesDisponibles.map((mes) => (
+                <option key={mes} value={mes}>{mes}</option>
+              ))}
+            </select>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setMostrarInformes(false)}
+                className="bg-red-600 text-white px-4 py-2 rounded"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  if (mesSeleccionado) exportarLlamadasPorMes(mesSeleccionado);
+                  setMostrarInformes(false);
+                  toast.success(`Informe de ${mesSeleccionado} generado`);
+                }}
+                disabled={!mesSeleccionado}
+                className={`px-4 py-2 rounded text-white ${mesSeleccionado
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-green-600 opacity-50 cursor-not-allowed"}`}
+              >
+                Exportar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
 
     </div >
 
