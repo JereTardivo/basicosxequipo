@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"name": "Swapii",
+			"path": "../Swapii"
+		}
+	],
+	"settings": {
+		"java.compile.nullAnalysis.mode": "automatic",
+		"java.configuration.updateBuildConfiguration": "automatic"
+	}
+}

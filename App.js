@@ -127,6 +127,17 @@ export default function App() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const ordenGuardado = localStorage.getItem("orden");
+    if (ordenGuardado) {
+      setOrden(ordenGuardado);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("orden", orden);
+  }, [orden]);
+
   const handleLogout = () => {
     setIsLogged(false);
     setEquipoFilter("");
@@ -602,7 +613,7 @@ export default function App() {
       {
         modalOpen && selectedEmpresaData && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
-            <div className="bg-gray-700 p-6 rounded-xl max-w-lg w-full relative">
+            <div className="bg-gray-700 p-6 rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto overflow-x-hidden relative">
               <button className="absolute top-2 right-3 text-white text-xl" onClick={() => setModalOpen(false)}>×</button>
               <h2 className="text-2xl font-bold mb-2">{selectedEmpresaData.empresa}</h2>
               <p className="mb-4">Llamadas realizadas: {selectedEmpresaData.llamadas.length}</p>
@@ -647,8 +658,12 @@ export default function App() {
                         </>
                       ) : (
                         <>
-                          <strong>{l.motivo}</strong>: {l.descripcion}<br />
-                          <span className="text-gray-400">Ticket: <a href={`https://soporte.flexxus.com.ar/tickets/${l.ticket}`} target="_blank" className="underline text-blue-400">{l.ticket}</a> | Agente: {l.agente}</span>
+                          <div className="break-words">
+                            <strong>{l.motivo}</strong>: {l.descripcion}<br />
+                            <span className="text-gray-400">
+                              Ticket: <a href={`https://soporte.flexxus.com.ar/tickets/${l.ticket}`} target="_blank" className="underline text-blue-400">{l.ticket}</a> | Agente: {l.agente}
+                            </span>
+                          </div>
                           {(l.agente === nombreUsuario || nombreUsuario === "Flexxus") && (
                             <Pencil
                               size={16}
@@ -802,56 +817,58 @@ export default function App() {
         )
       }
 
-      {modalPasswordOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
-          <div className="border border-gray-500 bg-gray-700 p-6 rounded-2xl w-full max-w-sm relative">
-            <button
-              onClick={() => setModalPasswordOpen(false)}
-              className="absolute top-2 right-3 text-white text-xl"
-            >
-              ×
-            </button>
-            <h2 className="text-lg font-bold mb-4">Cambiar contraseña</h2>
-            <p className="text-sm font-semibold text-gray-300 mb-1">Contraseña actual</p>
-            <input
-              type="password"
-              placeholder="Contraseña actual"
-              value={passwordForm.actual}
-              onChange={(e) => setPasswordForm({ ...passwordForm, actual: e.target.value })}
-              className="w-full p-2 mb-3 rounded bg-gray-600 text-white"
-            />
-            <p className="text-sm font-semibold text-gray-300 mb-1">Nueva contraseña</p>
-            <input
-              type="password"
-              placeholder="Nueva contraseña"
-              value={passwordForm.nueva}
-              onChange={(e) => setPasswordForm({ ...passwordForm, nueva: e.target.value })}
-              className="w-full p-2 mb-3 rounded bg-gray-600 text-white"
-            />
-            <p className="text-sm font-semibold text-gray-300 mb-1">Repetir nueva contraseña</p>
-            <input
-              type="password"
-              placeholder="Repetir nueva contraseña"
-              value={passwordForm.repetir}
-              onChange={(e) => setPasswordForm({ ...passwordForm, repetir: e.target.value })}
-              className="w-full p-2 mb-4 rounded bg-gray-600 text-white"
-            />
+      {
+        modalPasswordOpen && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
+            <div className="border border-gray-500 bg-gray-700 p-6 rounded-2xl w-full max-w-sm relative">
+              <button
+                onClick={() => setModalPasswordOpen(false)}
+                className="absolute top-2 right-3 text-white text-xl"
+              >
+                ×
+              </button>
+              <h2 className="text-lg font-bold mb-4">Cambiar contraseña</h2>
+              <p className="text-sm font-semibold text-gray-300 mb-1">Contraseña actual</p>
+              <input
+                type="password"
+                placeholder="Contraseña actual"
+                value={passwordForm.actual}
+                onChange={(e) => setPasswordForm({ ...passwordForm, actual: e.target.value })}
+                className="w-full p-2 mb-3 rounded bg-gray-600 text-white"
+              />
+              <p className="text-sm font-semibold text-gray-300 mb-1">Nueva contraseña</p>
+              <input
+                type="password"
+                placeholder="Nueva contraseña"
+                value={passwordForm.nueva}
+                onChange={(e) => setPasswordForm({ ...passwordForm, nueva: e.target.value })}
+                className="w-full p-2 mb-3 rounded bg-gray-600 text-white"
+              />
+              <p className="text-sm font-semibold text-gray-300 mb-1">Repetir nueva contraseña</p>
+              <input
+                type="password"
+                placeholder="Repetir nueva contraseña"
+                value={passwordForm.repetir}
+                onChange={(e) => setPasswordForm({ ...passwordForm, repetir: e.target.value })}
+                className="w-full p-2 mb-4 rounded bg-gray-600 text-white"
+              />
 
-            {passwordError && <p className="text-red-400 text-sm mb-4">{passwordError}</p>}
+              {passwordError && <p className="text-red-400 text-sm mb-4">{passwordError}</p>}
 
-            <div className="flex justify-end gap-2">
-              <Button onClick={() => setModalPasswordOpen(false)} className="bg-red-500 text-white">
-                Cancelar
-              </Button>
-              <Button onClick={handlePasswordChange} className="bg-green-500 text-white">
-                Guardar
-              </Button>
+              <div className="flex justify-end gap-2">
+                <Button onClick={() => setModalPasswordOpen(false)} className="bg-red-500 text-white">
+                  Cancelar
+                </Button>
+                <Button onClick={handlePasswordChange} className="bg-green-500 text-white">
+                  Guardar
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-    </div>
+    </div >
 
   );
 
