@@ -80,32 +80,35 @@ export default function App() {
 
   const mesActualId = getMesId();
 
-  // Función temporal para migrar datos de la colección antigua "empresas" al mes actual
-  const migrarDatosAntiguos = async () => {
+  // Función temporal - por ahora usar la colección existente
+  const verificarDatosExistentes = async () => {
     try {
-      console.log("🔄 Verificando si hay datos en la colección antigua 'empresas'...");
+      console.log("🔄 Verificando datos existentes en la colección 'empresas'...");
       
-      const empresasAntiguasSnapshot = await getDocs(collection(db, "empresas"));
+      const empresasSnapshot = await getDocs(collection(db, "empresas"));
       
-      if (!empresasAntiguasSnapshot.empty) {
-        console.log(`📦 Encontradas ${empresasAntiguasSnapshot.size} empresas en la colección antigua`);
+      if (!empresasSnapshot.empty) {
+        console.log(`📦 Encontradas ${empresasSnapshot.size} empresas en la colección`);
         
-        const batch = [];
-        empresasAntiguasSnapshot.forEach((doc) => {
-          const empresaData = doc.data();
-          batch.push(setDoc(doc(db, `empresas-${mesActualId}`, doc.id), empresaData));
-        });
+        const lista = empresasSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
         
-        await Promise.all(batch);
-        console.log(`✅ Migradas ${batch.length} empresas de la colección antigua al mes ${mesActualId}`);
-        toast.success(`Migradas ${batch.length} empresas de la estructura antigua`);
+        setData(lista);
+        setCargandoEmpresas(false);
+        toast.success(`Cargadas ${lista.length} empresas`);
         
-        return true; // Indica que se migraron datos
+        return true;
       }
       
-      return false; // No había datos antiguos
+      console.log("⚠️ No se encontraron empresas");
+      setCargandoEmpresas(false);
+      return false;
     } catch (error) {
-      console.error("❌ Error migrando datos antiguos:", error);
+      console.error("❌ Error verificando datos:", error);
+      setCargandoEmpresas(false);
+      toast.error("Error al cargar empresas: " + error.message);
       return false;
     }
   };
@@ -260,9 +263,8 @@ export default function App() {
           return;
         }
 
-        // Usar la colección del mes actual
-        const coleccionMesActual = `empresas-${mesActualId}`;
-        const snapshot = await getDocs(collection(db, coleccionMesActual));
+        // Usar la colección existente
+        const snapshot = await getDocs(collection(db, "empresas"));
         const empresasExistentes = {};
         
         // Crear un mapa de empresas existentes del mes actual
@@ -281,9 +283,9 @@ export default function App() {
         let empresasActualizadas = 0;
         let empresasEliminadas = 0;
 
-        // Eliminar empresas que ya no están en el Excel (solo del mes actual)
+        // Eliminar empresas que ya no están en el Excel
         for (const empresaId of empresasAEliminar) {
-          await deleteDoc(doc(db, coleccionMesActual, empresaId));
+          await deleteDoc(doc(db, "empresas", empresaId));
           empresasEliminadas++;
         }
 
@@ -295,14 +297,14 @@ export default function App() {
           if (empresasExistentes[nombre]) {
             // Empresa existe: mantener llamadas existentes, actualizar equipo si cambió
             const empresaExistente = empresasExistentes[nombre];
-            await setDoc(doc(db, coleccionMesActual, nombre), {
+            await setDoc(doc(db, "empresas", nombre), {
               ...empresaExistente,
               equipo, // Actualizar equipo por si cambió
             });
             empresasActualizadas++;
           } else {
             // Empresa nueva: crear con llamadas vacías
-            await setDoc(doc(db, coleccionMesActual, nombre), {
+            await setDoc(doc(db, "empresas", nombre), {
               empresa: nombre,
               equipo,
               llamadas: [],
@@ -312,7 +314,7 @@ export default function App() {
         }
 
         // Volver a cargar datos actualizados desde Firebase
-        await obtenerEmpresas(mesActualId);
+        await obtenerEmpresas();
 
         alert(`Importación completada para ${mesActual}:\n${empresasAgregadas} empresas agregadas\n${empresasActualizadas} empresas actualizadas\n${empresasEliminadas} empresas eliminadas\nEl historial de otros meses se mantiene intacto.`);
       } catch (error) {
@@ -326,31 +328,17 @@ export default function App() {
 
 
   const cargarMesesDisponibles = async () => {
+    const snapshot = await getDocs(collection(db, "empresas"));
     const mesesSet = new Set();
 
-    // Buscar en todas las colecciones mensuales (últimos 24 meses)
-    const fechaActual = new Date();
-    for (let i = 0; i < 24; i++) {
-      const fecha = new Date(fechaActual);
-      fecha.setMonth(fecha.getMonth() - i);
-      const mesId = getMesId(fecha);
-      
-      try {
-        const snapshot = await getDocs(collection(db, `empresas-${mesId}`));
-        
-        snapshot.forEach((docu) => {
-          const empresaData = docu.data();
-          empresaData.llamadas?.forEach((llamada) => {
-            if (llamada.mes) {
-              mesesSet.add(llamada.mes);
-            }
-          });
-        });
-      } catch (error) {
-        // Colección no existe, continuar
-        continue;
-      }
-    }
+    snapshot.forEach((docu) => {
+      const empresaData = docu.data();
+      empresaData.llamadas?.forEach((llamada) => {
+        if (llamada.mes) {
+          mesesSet.add(llamada.mes);
+        }
+      });
+    });
 
     const mesesUnicos = Array.from(mesesSet).sort((a, b) => {
       const [mesA, añoA] = a.split(" ");
@@ -400,7 +388,7 @@ export default function App() {
         const nuevas = [...item.llamadas, { ...formValues, agente: nombreUsuario, mes: mesActual }];
         const updatedItem = { ...item, llamadas: nuevas };
         const docId = item.empresa;
-        setDoc(doc(db, `empresas-${mesActualId}`, docId), updatedItem);
+        setDoc(doc(db, "empresas", docId), updatedItem);
         return updatedItem;
       }
       return item;
@@ -411,50 +399,28 @@ export default function App() {
   };
 
   const exportarLlamadasPorMes = async (mesSeleccionado) => {
+    const snapshot = await getDocs(collection(db, "empresas"));
     const llamadasFiltradas = [];
-    
-    // Buscar en todas las colecciones mensuales existentes
-    try {
-      // Obtener todas las colecciones que empiecen con "empresas-"
-      const collections = await db._delegate._databaseId;
-      
-      // Por ahora, buscaremos en un rango de meses (últimos 12 meses)
-      const fechaActual = new Date();
-      for (let i = 0; i < 12; i++) {
-        const fecha = new Date(fechaActual);
-        fecha.setMonth(fecha.getMonth() - i);
-        const mesId = getMesId(fecha);
-        
-        try {
-          const snapshot = await getDocs(collection(db, `empresas-${mesId}`));
-          
-          snapshot.forEach((docu) => {
-            const empresaData = docu.data();
-            
-            // Filtrar las llamadas de este mes específico
-            const llamadasMes = empresaData.llamadas?.filter((llamada) => llamada.mes === mesSeleccionado) || [];
-            
-            llamadasMes.forEach((llamada) => {
-              llamadasFiltradas.push({
-                Empresa: empresaData.empresa,
-                Equipo: empresaData.equipo,
-                Agente: llamada.agente || "",
-                Motivo: llamada.motivo,
-                Descripción: llamada.descripcion,
-                Ticket: llamada.ticket,
-                Mes: llamada.mes,
-                "Cantidad de llamadas en el mes": llamadasMes.length,
-              });
-            });
-          });
-        } catch (error) {
-          // Colección no existe, continuar
-          continue;
-        }
-      }
-    } catch (error) {
-      console.error("Error al exportar llamadas:", error);
-    }
+
+    snapshot.forEach((docu) => {
+      const empresaData = docu.data();
+
+      // Filtrar las llamadas de este mes
+      const llamadasMes = empresaData.llamadas?.filter((llamada) => llamada.mes === mesSeleccionado) || [];
+
+      llamadasMes.forEach((llamada) => {
+        llamadasFiltradas.push({
+          Empresa: empresaData.empresa,
+          Equipo: empresaData.equipo,
+          Agente: llamada.agente || "",
+          Motivo: llamada.motivo,
+          Descripción: llamada.descripcion,
+          Ticket: llamada.ticket,
+          Mes: llamada.mes,
+          "Cantidad de llamadas en el mes": llamadasMes.length,
+        });
+      });
+    });
 
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(llamadasFiltradas);
@@ -503,8 +469,8 @@ export default function App() {
       equipo: nuevoEquipoEmpresa,
       llamadas: [],
     };
-    await setDoc(doc(db, `empresas-${mesActualId}`, docId), nueva);
-    await obtenerEmpresas(mesActualId); // Recargar datos
+    await setDoc(doc(db, "empresas", docId), nueva);
+    await obtenerEmpresas(); // Recargar datos
     setModalAddOpen(false);
   };
 
@@ -533,10 +499,10 @@ export default function App() {
     const newDocId = nuevoNombre;
 
     try {
-      await deleteDoc(doc(db, `empresas-${mesActualId}`, oldDocId));
-      await setDoc(doc(db, `empresas-${mesActualId}`, newDocId), nuevo);
+      await deleteDoc(doc(db, "empresas", oldDocId));
+      await setDoc(doc(db, "empresas", newDocId), nuevo);
 
-      await obtenerEmpresas(mesActualId); // Recargar datos
+      await obtenerEmpresas(); // Recargar datos
       setModalEditOpen(false);
 
     } catch (error) {
@@ -561,9 +527,9 @@ export default function App() {
     const docId = empresaObj.empresa;
 
     try {
-      await deleteDoc(doc(db, `empresas-${mesActualId}`, docId));
+      await deleteDoc(doc(db, "empresas", docId));
       console.log("Eliminado correctamente:", docId);
-      await obtenerEmpresas(mesActualId); // Recargar datos
+      await obtenerEmpresas(); // Recargar datos
       setModalDeleteOpen(false);
     } catch (error) {
       console.error("Error al eliminar empresa de Firebase:", error);
@@ -594,7 +560,7 @@ export default function App() {
     };
 
     // Actualizar en Firebase
-    await setDoc(doc(db, `empresas-${mesActualId}`, empresaActual), empresaActualizada);
+    await setDoc(doc(db, "empresas", empresaActual), empresaActualizada);
 
     // Actualizar estados locales
     const nuevasEmpresas = data.map((e) =>
@@ -728,16 +694,11 @@ export default function App() {
     }
   };
 
-  const obtenerEmpresas = async (mesId = mesActualId) => {
+  const obtenerEmpresas = async () => {
     try {
       setCargandoEmpresas(true);
       
-      // Primero intentar migración automática si es el mes actual
-      if (mesId === mesActualId) {
-        await migrarEmpresasNuevoMes();
-      }
-      
-      const snapshot = await getDocs(collection(db, `empresas-${mesId}`));
+      const snapshot = await getDocs(collection(db, "empresas"));
       const lista = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -780,21 +741,14 @@ export default function App() {
       if (typeof window === "undefined") return;
 
       try {
-        // Primero intentar migrar datos de la colección antigua
-        const seMigraronDatosAntiguos = await migrarDatosAntiguos();
-        
-        // Si no se migraron datos antiguos, intentar migración del mes anterior
-        if (!seMigraronDatosAntiguos) {
-          await migrarEmpresasNuevoMes();
-        }
-        
-        // Cargar datos del mes actual
-        await obtenerEmpresas(mesActualId);
+        // Por ahora, simplemente cargar datos de la colección existente
+        await verificarDatosExistentes();
         
         // Guardar el mes actual para referencia
         localStorage.setItem("mesActualId", mesActualId);
       } catch (error) {
         console.error("Error al inicializar aplicación:", error);
+        setCargandoEmpresas(false);
       }
     };
 
@@ -802,13 +756,14 @@ export default function App() {
   }, []); // Solo ejecutar una vez al montar el componente
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, `empresas-${mesActualId}`), (snapshot) => {
+    const unsubscribe = onSnapshot(collection(db, "empresas"), (snapshot) => {
       const firebaseData = snapshot.docs.map((doc) => doc.data());
       setData(firebaseData);
+      setCargandoEmpresas(false);
     });
 
     return () => unsubscribe(); // Limpia el listener al desmontar
-  }, [mesActualId]);
+  }, []);
 
   useEffect(() => {
     const ordenGuardado = localStorage.getItem("orden");
@@ -1189,24 +1144,16 @@ export default function App() {
                   <button
                     onClick={async () => {
                       setMenuEmpresasVisible(false);
-                      toast.info("Iniciando migración de datos...");
-                      
-                      // Intentar migrar datos antiguos
-                      const seMigraronAntiguos = await migrarDatosAntiguos();
-                      
-                      // Si no había datos antiguos, intentar migración mensual
-                      if (!seMigraronAntiguos) {
-                        await migrarEmpresasNuevoMes();
-                      }
+                      toast.info("Recargando datos...");
                       
                       // Recargar datos
-                      await obtenerEmpresas(mesActualId);
+                      await obtenerEmpresas();
                     }}
                     className="block w-full text-left px-4 py-2 text-sm text-purple-400 hover:bg-gray-700"
                   >
                     <div className="flex items-center gap-2">
                       <span>🔄</span>
-                      <span>Migrar Datos</span>
+                      <span>Recargar Datos</span>
                     </div>
                   </button>
                 </div>
