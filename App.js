@@ -969,7 +969,7 @@ export default function App() {
           )}
 
           {/* Botón Empresas (si está logueado) */}
-          {isLogged && nombreUsuario === "Flexxus" && (
+          {isLogged && isFlexxus && (
             <div ref={menuEmpresasRef} className="relative">
               <button
                 onClick={() => setMenuEmpresasVisible(!menuEmpresasVisible)}
@@ -1034,7 +1034,7 @@ export default function App() {
                   </button>
                 </div>
               )}
-              {nombreUsuario === "Flexxus" && (
+              {isFlexxus && (
                 <>
                   <input
                     type="file"
