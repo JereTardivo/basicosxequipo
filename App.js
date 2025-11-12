@@ -70,6 +70,49 @@ export default function App() {
   year: "numeric"
 }).replace(" de ", " ").toLowerCase();
 
+  // Función para obtener el ID del mes (formato: "2025-11" para noviembre 2025)
+  const getMesId = (fecha = new Date()) => {
+    const año = fecha.getFullYear();
+    const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+    return `${año}-${mes}`;
+  };
+
+  const mesActualId = getMesId();
+
+  // Función para migrar empresas al nuevo mes automáticamente
+  const migrarEmpresasNuevoMes = async () => {
+    try {
+      // Verificar si ya existen empresas para el mes actual
+      const mesActualSnapshot = await getDocs(collection(db, `empresas-${mesActualId}`));
+      
+      if (mesActualSnapshot.empty) {
+        // No hay empresas para este mes, buscar el mes anterior
+        const fechaAnterior = new Date();
+        fechaAnterior.setMonth(fechaAnterior.getMonth() - 1);
+        const mesAnteriorId = getMesId(fechaAnterior);
+        
+        const mesAnteriorSnapshot = await getDocs(collection(db, `empresas-${mesAnteriorId}`));
+        
+        if (!mesAnteriorSnapshot.empty) {
+          // Copiar empresas del mes anterior con llamadas en cero
+          const batch = [];
+          mesAnteriorSnapshot.forEach((doc) => {
+            const empresaData = doc.data();
+            const nuevaEmpresa = {
+              ...empresaData,
+              llamadas: [] // Resetear llamadas
+            };
+            batch.push(setDoc(doc(db, `empresas-${mesActualId}`, doc.id), nuevaEmpresa));
+          });
+          
+          await Promise.all(batch);
+          console.log(`Migradas ${batch.length} empresas al mes ${mesActualId}`);
+        }
+      }
+    } catch (error) {
+      console.error("Error en migración automática:", error);
+    }
+  };
 
   const exportarUsuarios = async () => {
     const querySnapshot = await getDocs(collection(db, "usuarios"));
@@ -172,40 +215,49 @@ export default function App() {
           return;
         }
 
-        const snapshot = await getDocs(collection(db, "empresas"));
+        // Usar la colección del mes actual
+        const coleccionMesActual = `empresas-${mesActualId}`;
+        const snapshot = await getDocs(collection(db, coleccionMesActual));
         const empresasExistentes = {};
         
-        // Crear un mapa de empresas existentes
+        // Crear un mapa de empresas existentes del mes actual
         snapshot.docs.forEach(doc => {
           empresasExistentes[doc.id] = doc.data();
         });
 
+        // Obtener empresas del Excel para el mes actual
+        const empresasEnExcel = filasValidas.map(row => row.RAZONSOCIAL);
+        const empresasEnFirebase = Object.keys(empresasExistentes);
+
+        // Empresas a eliminar: están en Firebase pero no en Excel
+        const empresasAEliminar = empresasEnFirebase.filter(id => !empresasEnExcel.includes(id));
+
         let empresasAgregadas = 0;
         let empresasActualizadas = 0;
+        let empresasEliminadas = 0;
+
+        // Eliminar empresas que ya no están en el Excel (solo del mes actual)
+        for (const empresaId of empresasAEliminar) {
+          await deleteDoc(doc(db, coleccionMesActual, empresaId));
+          empresasEliminadas++;
+        }
 
         // Procesar cada fila del Excel
         for (const row of filasValidas) {
           const nombre = row.RAZONSOCIAL;
           const equipo = row.NOMBRE.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
-          const mesNumero = parseInt(row.MES);
-          
-          // Convertir número de mes a nombre del mes en español
-          const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", 
-                        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
-          const añoActual = new Date().getFullYear();
-          const mesNombre = `${meses[mesNumero - 1]} ${añoActual}`;
 
           if (empresasExistentes[nombre]) {
-            // Empresa existe: mantener llamadas existentes
+            // Empresa existe: mantener llamadas existentes, actualizar equipo si cambió
             const empresaExistente = empresasExistentes[nombre];
-            await setDoc(doc(db, "empresas", nombre), {
+            await setDoc(doc(db, coleccionMesActual, nombre), {
               ...empresaExistente,
               equipo, // Actualizar equipo por si cambió
             });
             empresasActualizadas++;
           } else {
             // Empresa nueva: crear con llamadas vacías
-            await setDoc(doc(db, "empresas", nombre), {
+            await setDoc(doc(db, coleccionMesActual, nombre), {
               empresa: nombre,
               equipo,
               llamadas: [],
@@ -215,11 +267,9 @@ export default function App() {
         }
 
         // Volver a cargar datos actualizados desde Firebase
-        const nuevoSnapshot = await getDocs(collection(db, "empresas"));
-        const nuevasEmpresas = nuevoSnapshot.docs.map((doc) => doc.data());
-        setData(nuevasEmpresas);
+        await obtenerEmpresas(mesActualId);
 
-        alert(`Importación completada. ${empresasAgregadas} empresas nuevas agregadas, ${empresasActualizadas} empresas actualizadas. El historial de llamadas se mantiene intacto.`);
+        alert(`Importación completada para ${mesActual}:\n${empresasAgregadas} empresas agregadas\n${empresasActualizadas} empresas actualizadas\n${empresasEliminadas} empresas eliminadas\nEl historial de otros meses se mantiene intacto.`);
       } catch (error) {
         console.error('Error al importar Excel:', error);
         alert('Error al importar el archivo Excel. Por favor, verifique el formato del archivo.');
@@ -231,17 +281,31 @@ export default function App() {
 
 
   const cargarMesesDisponibles = async () => {
-    const snapshot = await getDocs(collection(db, "empresas"));
     const mesesSet = new Set();
 
-    snapshot.forEach((docu) => {
-      const empresaData = docu.data();
-      empresaData.llamadas?.forEach((llamada) => {
-        if (llamada.mes) {
-          mesesSet.add(llamada.mes);
-        }
-      });
-    });
+    // Buscar en todas las colecciones mensuales (últimos 24 meses)
+    const fechaActual = new Date();
+    for (let i = 0; i < 24; i++) {
+      const fecha = new Date(fechaActual);
+      fecha.setMonth(fecha.getMonth() - i);
+      const mesId = getMesId(fecha);
+      
+      try {
+        const snapshot = await getDocs(collection(db, `empresas-${mesId}`));
+        
+        snapshot.forEach((docu) => {
+          const empresaData = docu.data();
+          empresaData.llamadas?.forEach((llamada) => {
+            if (llamada.mes) {
+              mesesSet.add(llamada.mes);
+            }
+          });
+        });
+      } catch (error) {
+        // Colección no existe, continuar
+        continue;
+      }
+    }
 
     const mesesUnicos = Array.from(mesesSet).sort((a, b) => {
       const [mesA, añoA] = a.split(" ");
@@ -291,7 +355,7 @@ export default function App() {
         const nuevas = [...item.llamadas, { ...formValues, agente: nombreUsuario, mes: mesActual }];
         const updatedItem = { ...item, llamadas: nuevas };
         const docId = item.empresa;
-        setDoc(doc(db, "empresas", docId), updatedItem);
+        setDoc(doc(db, `empresas-${mesActualId}`, docId), updatedItem);
         return updatedItem;
       }
       return item;
@@ -302,28 +366,50 @@ export default function App() {
   };
 
   const exportarLlamadasPorMes = async (mesSeleccionado) => {
-    const snapshot = await getDocs(collection(db, "empresas"));
     const llamadasFiltradas = [];
-
-    snapshot.forEach((docu) => {
-      const empresaData = docu.data();
-
-      // Filtrar las llamadas de este mes
-      const llamadasMes = empresaData.llamadas?.filter((llamada) => llamada.mes === mesSeleccionado) || [];
-
-      llamadasMes.forEach((llamada) => {
-        llamadasFiltradas.push({
-          Empresa: empresaData.empresa,
-          Equipo: empresaData.equipo,
-          Agente: llamada.agente || "",
-          Motivo: llamada.motivo,
-          Descripción: llamada.descripcion,
-          Ticket: llamada.ticket,
-          Mes: llamada.mes,
-          "Cantidad de llamadas en el mes": llamadasMes.length,
-        });
-      });
-    });
+    
+    // Buscar en todas las colecciones mensuales existentes
+    try {
+      // Obtener todas las colecciones que empiecen con "empresas-"
+      const collections = await db._delegate._databaseId;
+      
+      // Por ahora, buscaremos en un rango de meses (últimos 12 meses)
+      const fechaActual = new Date();
+      for (let i = 0; i < 12; i++) {
+        const fecha = new Date(fechaActual);
+        fecha.setMonth(fecha.getMonth() - i);
+        const mesId = getMesId(fecha);
+        
+        try {
+          const snapshot = await getDocs(collection(db, `empresas-${mesId}`));
+          
+          snapshot.forEach((docu) => {
+            const empresaData = docu.data();
+            
+            // Filtrar las llamadas de este mes específico
+            const llamadasMes = empresaData.llamadas?.filter((llamada) => llamada.mes === mesSeleccionado) || [];
+            
+            llamadasMes.forEach((llamada) => {
+              llamadasFiltradas.push({
+                Empresa: empresaData.empresa,
+                Equipo: empresaData.equipo,
+                Agente: llamada.agente || "",
+                Motivo: llamada.motivo,
+                Descripción: llamada.descripcion,
+                Ticket: llamada.ticket,
+                Mes: llamada.mes,
+                "Cantidad de llamadas en el mes": llamadasMes.length,
+              });
+            });
+          });
+        } catch (error) {
+          // Colección no existe, continuar
+          continue;
+        }
+      }
+    } catch (error) {
+      console.error("Error al exportar llamadas:", error);
+    }
 
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(llamadasFiltradas);
@@ -372,8 +458,8 @@ export default function App() {
       equipo: nuevoEquipoEmpresa,
       llamadas: [],
     };
-    await setDoc(doc(db, "empresas", docId), nueva);
-    setData([...data, nueva]);
+    await setDoc(doc(db, `empresas-${mesActualId}`, docId), nueva);
+    await obtenerEmpresas(mesActualId); // Recargar datos
     setModalAddOpen(false);
   };
 
@@ -402,16 +488,10 @@ export default function App() {
     const newDocId = nuevoNombre;
 
     try {
-      await deleteDoc(doc(db, "empresas", oldDocId));
-      await setDoc(doc(db, "empresas", newDocId), nuevo);
+      await deleteDoc(doc(db, `empresas-${mesActualId}`, oldDocId));
+      await setDoc(doc(db, `empresas-${mesActualId}`, newDocId), nuevo);
 
-      const updated = data.map(e =>
-        e.empresa === empresaSeleccionada && e.equipo === empresaOriginal.equipo
-          ? nuevo
-          : e
-      );
-
-      setData(updated);
+      await obtenerEmpresas(mesActualId); // Recargar datos
       setModalEditOpen(false);
 
     } catch (error) {
@@ -436,9 +516,9 @@ export default function App() {
     const docId = empresaObj.empresa;
 
     try {
-      await deleteDoc(doc(db, "empresas", docId));
+      await deleteDoc(doc(db, `empresas-${mesActualId}`, docId));
       console.log("Eliminado correctamente:", docId);
-      setData(data.filter(e => !(e.empresa === empresaObj.empresa && e.equipo === equipoReal)));
+      await obtenerEmpresas(mesActualId); // Recargar datos
       setModalDeleteOpen(false);
     } catch (error) {
       console.error("Error al eliminar empresa de Firebase:", error);
@@ -469,7 +549,7 @@ export default function App() {
     };
 
     // Actualizar en Firebase
-    await setDoc(doc(db, "empresas", empresaActual), empresaActualizada);
+    await setDoc(doc(db, `empresas-${mesActualId}`, empresaActual), empresaActualizada);
 
     // Actualizar estados locales
     const nuevasEmpresas = data.map((e) =>
@@ -603,9 +683,14 @@ export default function App() {
     }
   };
 
-  const obtenerEmpresas = async () => {
+  const obtenerEmpresas = async (mesId = mesActualId) => {
     try {
-      const snapshot = await getDocs(collection(db, "empresas"));
+      // Primero intentar migración automática si es el mes actual
+      if (mesId === mesActualId) {
+        await migrarEmpresasNuevoMes();
+      }
+      
+      const snapshot = await getDocs(collection(db, `empresas-${mesId}`));
       const lista = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -642,51 +727,34 @@ export default function App() {
   }, [equipoFilter, isLogged]);
 
   useEffect(() => {
-    const resetLlamadasSiCambioMes = async () => {
+    const inicializarMesActual = async () => {
       if (typeof window === "undefined") return;
 
-      const mesActualCambioMes = new Date().getMonth();
-      const mesGuardado = localStorage.getItem("mesActualCambioMes");
-
-      if (mesGuardado === null) {
-        // Primera vez que corre: no borra nada, solo guarda el mes actual
-        localStorage.setItem("mesActualCambioMes", mesActualCambioMes.toString());
-        return;
-      }
-
-      if (parseInt(mesGuardado) !== mesActualCambioMes) {
-        try {
-          const snapshot = await getDocs(collection(db, "empresas"));
-          const nuevasEmpresas = [];
-
-          for (const docSnap of snapshot.docs) {
-            const empresaData = docSnap.data();
-            const nuevaEmpresa = { ...empresaData, llamadas: [] };
-            await setDoc(doc(db, "empresas", docSnap.id), nuevaEmpresa);
-            nuevasEmpresas.push(nuevaEmpresa);
-          }
-
-          setData(nuevasEmpresas);
-          localStorage.setItem("mesActualCambioMes", mesActualCambioMes.toString());
-          toast.success("Llamadas reiniciadas automáticamente por cambio de mes.");
-        } catch (error) {
-          console.error("Error al resetear llamadas:", error);
-          toast.error("Error al reiniciar las llamadas.");
-        }
+      try {
+        // Ejecutar migración automática al cargar la aplicación
+        await migrarEmpresasNuevoMes();
+        
+        // Cargar datos del mes actual
+        await obtenerEmpresas(mesActualId);
+        
+        // Guardar el mes actual para referencia
+        localStorage.setItem("mesActualId", mesActualId);
+      } catch (error) {
+        console.error("Error al inicializar mes actual:", error);
       }
     };
 
-    resetLlamadasSiCambioMes();
-  }, []);
+    inicializarMesActual();
+  }, [mesActualId]);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "empresas"), (snapshot) => {
+    const unsubscribe = onSnapshot(collection(db, `empresas-${mesActualId}`), (snapshot) => {
       const firebaseData = snapshot.docs.map((doc) => doc.data());
       setData(firebaseData);
     });
 
     return () => unsubscribe(); // Limpia el listener al desmontar
-  }, []);
+  }, [mesActualId]);
 
   useEffect(() => {
     const ordenGuardado = localStorage.getItem("orden");
