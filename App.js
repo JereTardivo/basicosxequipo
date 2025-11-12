@@ -135,45 +135,70 @@ export default function App() {
 
     const reader = new FileReader();
     reader.onload = async (evt) => {
-      const bstr = evt.target.result;
-      const workbook = XLSX.read(bstr, { type: "binary" });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const json = XLSX.utils.sheet_to_json(worksheet);
+      try {
+        const bstr = evt.target.result;
+        const workbook = XLSX.read(bstr, { type: "binary" });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(worksheet);
 
-      const snapshot = await getDocs(collection(db, "empresas"));
-      const empresasEnFirebase = snapshot.docs.map((doc) => doc.id);
-      const empresasEnExcel = json.map(row => row.EMPRESA);
+        // Validar que todas las filas tengan los campos requeridos
+        const filasValidas = json.filter(row => {
+          if (!row.RAZONSOCIAL || !row.NOMBRE) {
+            console.warn('Fila ignorada por falta de datos:', row);
+            return false;
+          }
+          if (typeof row.NOMBRE !== 'string') {
+            console.warn('Fila ignorada por NOMBRE inválido:', row);
+            return false;
+          }
+          return true;
+        });
 
-      // Empresas a eliminar: están en Firebase pero no en Excel
-      const empresasAEliminar = empresasEnFirebase.filter(id => !empresasEnExcel.includes(id));
-
-      // Empresas a agregar: están en Excel pero no en Firebase
-      const empresasAAgregar = empresasEnExcel.filter(nombre => !empresasEnFirebase.includes(nombre));
-
-      // Eliminar empresas que ya no están en el Excel
-      for (const id of empresasAEliminar) {
-        await deleteDoc(doc(db, "empresas", id));
-      }
-
-      // Agregar solo empresas nuevas
-      for (const row of json) {
-        const nombre = row.EMPRESA;
-        const equipo = row.EQUIPO.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
-
-        if (empresasAAgregar.includes(nombre)) {
-          await setDoc(doc(db, "empresas", nombre), {
-            empresa: nombre,
-            equipo,
-            mes,
-            llamadas: [],
-          });
+        if (filasValidas.length === 0) {
+          alert('El archivo Excel no contiene datos válidos. Verifique que tenga las columnas RAZONSOCIAL y NOMBRE.');
+          return;
         }
-      }
 
-      // Volver a cargar datos actualizados desde Firebase
-      const nuevoSnapshot = await getDocs(collection(db, "empresas"));
-      const nuevasEmpresas = nuevoSnapshot.docs.map((doc) => doc.data());
-      setData(nuevasEmpresas);
+        const snapshot = await getDocs(collection(db, "empresas"));
+        const empresasEnFirebase = snapshot.docs.map((doc) => doc.id);
+        const empresasEnExcel = filasValidas.map(row => row.RAZONSOCIAL);
+
+        // Empresas a eliminar: están en Firebase pero no en Excel
+        const empresasAEliminar = empresasEnFirebase.filter(id => !empresasEnExcel.includes(id));
+
+        // Empresas a agregar: están en Excel pero no en Firebase
+        const empresasAAgregar = empresasEnExcel.filter(nombre => !empresasEnFirebase.includes(nombre));
+
+        // Eliminar empresas que ya no están en el Excel
+        for (const id of empresasAEliminar) {
+          await deleteDoc(doc(db, "empresas", id));
+        }
+
+        // Agregar solo empresas nuevas
+        for (const row of filasValidas) {
+          const nombre = row.RAZONSOCIAL;
+          const equipo = row.NOMBRE.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+
+          if (empresasAAgregar.includes(nombre)) {
+            await setDoc(doc(db, "empresas", nombre), {
+              empresa: nombre,
+              equipo,
+              mes,
+              llamadas: [],
+            });
+          }
+        }
+
+        // Volver a cargar datos actualizados desde Firebase
+        const nuevoSnapshot = await getDocs(collection(db, "empresas"));
+        const nuevasEmpresas = nuevoSnapshot.docs.map((doc) => doc.data());
+        setData(nuevasEmpresas);
+
+        alert(`Importación completada. ${empresasAAgregar.length} empresas agregadas, ${empresasAEliminar.length} empresas eliminadas.`);
+      } catch (error) {
+        console.error('Error al importar Excel:', error);
+        alert('Error al importar el archivo Excel. Por favor, verifique el formato del archivo.');
+      }
     };
 
     reader.readAsBinaryString(file);
@@ -1010,13 +1035,26 @@ export default function App() {
                 </div>
               )}
               {nombreUsuario === "Flexxus" && (
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  accept=".xlsx, .xls"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
+                <>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept=".xlsx, .xls"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <div className="mt-2 p-3 bg-blue-900/30 border border-blue-600/30 rounded-lg text-xs text-blue-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FileSpreadsheet size={14} />
+                      <span className="font-semibold">Formato requerido del Excel:</span>
+                    </div>
+                    <ul className="space-y-1 ml-4">
+                      <li>• Columna A: <span className="font-mono bg-blue-800/50 px-1 rounded">RAZONSOCIAL</span> (Nombre de la empresa)</li>
+                      <li>• Columna B: <span className="font-mono bg-blue-800/50 px-1 rounded">NOMBRE</span> (Nombre del equipo)</li>
+                    </ul>
+                    <p className="mt-2 text-blue-300">Las filas sin estos datos serán ignoradas automáticamente.</p>
+                  </div>
+                </>
               )}
             </div>
           )}
