@@ -137,8 +137,8 @@ export default function App() {
     const reader = new FileReader();
     reader.onload = async (evt) => {
       try {
-        const bstr = evt.target.result;
-        const workbook = XLSX.read(bstr, { type: "binary" });
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const json = XLSX.utils.sheet_to_json(worksheet);
 
@@ -219,7 +219,7 @@ export default function App() {
       }
     };
 
-    reader.readAsBinaryString(file);
+    reader.readAsArrayBuffer(file);
   };
 
 
@@ -1117,12 +1117,12 @@ export default function App() {
                 }`}
             >
               <option value="">Todos los equipos</option>
-              <option value="Equipo 1">Equipo 1</option>
-              <option value="Equipo 2">Equipo 2</option>
-              <option value="Equipo 3">Equipo 3</option>
-              <option value="Equipo 4">Equipo 4</option>
-              <option value="Equipo 5">Equipo 5</option>
-              <option value="Equipo Corralon">Equipo Corralon</option>
+              <option value="equipo 1 (gz)">EQUIPO 1 (GZ)</option>
+              <option value="equipo 2 (fp)">EQUIPO 2 (FP)</option>
+              <option value="equipo 3 (jt)">EQUIPO 3 (JT)</option>
+              <option value="equipo 4 (mc)">EQUIPO 4 (MC)</option>
+              <option value="equipo 5 (ga)">EQUIPO 5 (GA)</option>
+              <option value="equipo corralon (kb)">EQUIPO CORRALON (KB)</option>
             </select>
           </div>
         </div>
