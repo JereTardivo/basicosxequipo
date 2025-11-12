@@ -80,19 +80,56 @@ export default function App() {
 
   const mesActualId = getMesId();
 
+  // Función temporal para migrar datos de la colección antigua "empresas" al mes actual
+  const migrarDatosAntiguos = async () => {
+    try {
+      console.log("🔄 Verificando si hay datos en la colección antigua 'empresas'...");
+      
+      const empresasAntiguasSnapshot = await getDocs(collection(db, "empresas"));
+      
+      if (!empresasAntiguasSnapshot.empty) {
+        console.log(`📦 Encontradas ${empresasAntiguasSnapshot.size} empresas en la colección antigua`);
+        
+        const batch = [];
+        empresasAntiguasSnapshot.forEach((doc) => {
+          const empresaData = doc.data();
+          batch.push(setDoc(doc(db, `empresas-${mesActualId}`, doc.id), empresaData));
+        });
+        
+        await Promise.all(batch);
+        console.log(`✅ Migradas ${batch.length} empresas de la colección antigua al mes ${mesActualId}`);
+        toast.success(`Migradas ${batch.length} empresas de la estructura antigua`);
+        
+        return true; // Indica que se migraron datos
+      }
+      
+      return false; // No había datos antiguos
+    } catch (error) {
+      console.error("❌ Error migrando datos antiguos:", error);
+      return false;
+    }
+  };
+
   // Función para migrar empresas al nuevo mes automáticamente
   const migrarEmpresasNuevoMes = async () => {
     try {
+      console.log(`🔍 Verificando empresas para el mes actual: ${mesActualId}`);
+      
       // Verificar si ya existen empresas para el mes actual
       const mesActualSnapshot = await getDocs(collection(db, `empresas-${mesActualId}`));
+      console.log(`📊 Empresas encontradas en ${mesActualId}: ${mesActualSnapshot.size}`);
       
       if (mesActualSnapshot.empty) {
+        console.log(`📅 No hay empresas para ${mesActualId}, buscando mes anterior...`);
+        
         // No hay empresas para este mes, buscar el mes anterior
         const fechaAnterior = new Date();
         fechaAnterior.setMonth(fechaAnterior.getMonth() - 1);
         const mesAnteriorId = getMesId(fechaAnterior);
+        console.log(`🔍 Buscando empresas en mes anterior: ${mesAnteriorId}`);
         
         const mesAnteriorSnapshot = await getDocs(collection(db, `empresas-${mesAnteriorId}`));
+        console.log(`📊 Empresas encontradas en ${mesAnteriorId}: ${mesAnteriorSnapshot.size}`);
         
         if (!mesAnteriorSnapshot.empty) {
           // Copiar empresas del mes anterior con llamadas en cero
@@ -107,11 +144,18 @@ export default function App() {
           });
           
           await Promise.all(batch);
-          console.log(`Migradas ${batch.length} empresas al mes ${mesActualId}`);
+          console.log(`✅ Migradas ${batch.length} empresas al mes ${mesActualId}`);
+          toast.success(`Migradas ${batch.length} empresas de ${mesAnteriorId} a ${mesActualId}`);
+        } else {
+          console.log(`⚠️ No hay empresas en el mes anterior (${mesAnteriorId}) para migrar`);
+          toast.info(`No hay empresas del mes anterior para migrar. Importa un Excel o agrega empresas manualmente.`);
         }
+      } else {
+        console.log(`✅ Ya existen ${mesActualSnapshot.size} empresas para ${mesActualId}`);
       }
     } catch (error) {
-      console.error("Error en migración automática:", error);
+      console.error("❌ Error en migración automática:", error);
+      toast.error("Error en la migración automática de empresas");
     }
   };
 
@@ -736,8 +780,13 @@ export default function App() {
       if (typeof window === "undefined") return;
 
       try {
-        // Ejecutar migración automática al cargar la aplicación
-        await migrarEmpresasNuevoMes();
+        // Primero intentar migrar datos de la colección antigua
+        const seMigraronDatosAntiguos = await migrarDatosAntiguos();
+        
+        // Si no se migraron datos antiguos, intentar migración del mes anterior
+        if (!seMigraronDatosAntiguos) {
+          await migrarEmpresasNuevoMes();
+        }
         
         // Cargar datos del mes actual
         await obtenerEmpresas(mesActualId);
@@ -1134,6 +1183,30 @@ export default function App() {
                     <div className="flex items-center gap-2">
                       <FileSpreadsheet size={18} />
                       <span>Importar Excel</span>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={async () => {
+                      setMenuEmpresasVisible(false);
+                      toast.info("Iniciando migración de datos...");
+                      
+                      // Intentar migrar datos antiguos
+                      const seMigraronAntiguos = await migrarDatosAntiguos();
+                      
+                      // Si no había datos antiguos, intentar migración mensual
+                      if (!seMigraronAntiguos) {
+                        await migrarEmpresasNuevoMes();
+                      }
+                      
+                      // Recargar datos
+                      await obtenerEmpresas(mesActualId);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-purple-400 hover:bg-gray-700"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>🔄</span>
+                      <span>Migrar Datos</span>
                     </div>
                   </button>
                 </div>
