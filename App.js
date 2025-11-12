@@ -112,7 +112,7 @@ export default function App() {
           setIsLogged(true);
           setNombreUsuario(data.nombre || data.usuario);
           setUserDocId(data.usuario);
-          setEquipoFilter(data.equipo || "");
+          setEquipoFilter((data.equipo || "").toLowerCase());
           setIsFlexxus(!data.equipo);
           localStorage.setItem("isFlexxus", (!data.equipo).toString());
           setLoginError("");
