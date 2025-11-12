@@ -112,11 +112,16 @@ export default function App() {
           setIsLogged(true);
           setNombreUsuario(data.nombre || data.usuario);
           setUserDocId(data.usuario);
-          const equipoLowercase = (data.equipo || "").toLowerCase();
-          setEquipoFilter(equipoLowercase);
+          // Extraer solo la parte del equipo sin las iniciales
+          // Ejemplo: "EQUIPO 3 (JT)" -> "equipo 3"
+          const equipoCompleto = (data.equipo || "").toLowerCase();
+          const equipoBase = equipoCompleto.includes("(") 
+            ? equipoCompleto.split("(")[0].trim() 
+            : equipoCompleto;
+          setEquipoFilter(equipoBase);
           setIsFlexxus(!data.equipo);
           localStorage.setItem("isFlexxus", (!data.equipo).toString());
-          localStorage.setItem("equipoSeleccionado", equipoLowercase);
+          localStorage.setItem("equipoSeleccionado", equipoBase);
           setLoginError("");
           setLoginModal(false);
           cargarMesesDisponibles();
@@ -332,8 +337,14 @@ export default function App() {
     const empresaFiltro = (empresaFilter || "").toLowerCase();
     const equipoFiltro = (equipoFilter || "").toLowerCase();
 
-    return (!equipoFiltro || equipoItem === equipoFiltro) &&
-      (!empresaFiltro || empresaItem.includes(empresaFiltro));
+    // Para el filtro de equipo, hacer match parcial
+    // Ejemplo: si equipoFiltro es "equipo 3", debe hacer match con "equipo 3 (jt)"
+    const equipoMatch = !equipoFiltro || 
+                       equipoItem === equipoFiltro || 
+                       (equipoFiltro && equipoItem.startsWith(equipoFiltro + " (")) ||
+                       (equipoFiltro && equipoItem.startsWith(equipoFiltro) && equipoItem.includes("("));
+    
+    return equipoMatch && (!empresaFiltro || empresaItem.includes(empresaFiltro));
   });
 
   const sortedData = [...filteredData].sort((a, b) => {
