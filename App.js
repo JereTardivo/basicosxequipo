@@ -50,6 +50,7 @@ export default function App() {
   const [mostrarInformes, setMostrarInformes] = useState(false);
   const [mesSeleccionado, setMesSeleccionado] = useState("");
   const [menuInformesVisible, setMenuInformesVisible] = useState(false);
+  const [mostrarBannerExcel, setMostrarBannerExcel] = useState(false);
 
 
   const [equipoFilter, setEquipoFilter] = useState(() => {
@@ -1022,7 +1023,7 @@ export default function App() {
 
                   <button
                     onClick={() => {
-                      fileInputRef.current?.click();
+                      setMostrarBannerExcel(true);
                       setMenuEmpresasVisible(false);
                     }}
                     className="block w-full text-left px-4 py-2 text-sm text-blue-400 hover:bg-gray-700"
@@ -1033,28 +1034,6 @@ export default function App() {
                     </div>
                   </button>
                 </div>
-              )}
-              {isFlexxus && (
-                <>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept=".xlsx, .xls"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                  <div className="mt-2 p-3 bg-blue-900/30 border border-blue-600/30 rounded-lg text-xs text-blue-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <FileSpreadsheet size={14} />
-                      <span className="font-semibold">Formato requerido del Excel:</span>
-                    </div>
-                    <ul className="space-y-1 ml-4">
-                      <li>• Columna A: <span className="font-mono bg-blue-800/50 px-1 rounded">RAZONSOCIAL</span> (Nombre de la empresa)</li>
-                      <li>• Columna B: <span className="font-mono bg-blue-800/50 px-1 rounded">NOMBRE</span> (Nombre del equipo)</li>
-                    </ul>
-                    <p className="mt-2 text-blue-300">Las filas sin estos datos serán ignoradas automáticamente.</p>
-                  </div>
-                </>
               )}
             </div>
           )}
@@ -1142,6 +1121,48 @@ export default function App() {
           </select>
         </div>
       </div>
+
+      {/* Input de archivo oculto */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept=".xlsx, .xls"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
+
+      {/* Banner del formato Excel */}
+      {mostrarBannerExcel && (
+        <div className="mb-6 p-4 bg-blue-900/30 border border-blue-600/30 rounded-lg text-sm text-blue-200 max-w-2xl mx-auto">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <FileSpreadsheet size={16} />
+              <span className="font-semibold">Formato requerido del Excel:</span>
+            </div>
+            <button
+              onClick={() => setMostrarBannerExcel(false)}
+              className="text-blue-300 hover:text-blue-100 text-xl font-bold"
+            >
+              ×
+            </button>
+          </div>
+          <ul className="space-y-2 ml-4 mb-4">
+            <li>• Columna A: <span className="font-mono bg-blue-800/50 px-2 py-1 rounded">RAZONSOCIAL</span> (Nombre de la empresa)</li>
+            <li>• Columna B: <span className="font-mono bg-blue-800/50 px-2 py-1 rounded">NOMBRE</span> (Nombre del equipo)</li>
+          </ul>
+          <p className="mb-4 text-blue-300">Las filas sin estos datos serán ignoradas automáticamente.</p>
+          <button
+            onClick={() => {
+              fileInputRef.current?.click();
+              setMostrarBannerExcel(false);
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2"
+          >
+            <FileSpreadsheet size={16} />
+            Seleccionar archivo Excel
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-start auto-rows-min grid-flow-dense">
 
