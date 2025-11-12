@@ -144,7 +144,7 @@ export default function App() {
 
         // Validar que todas las filas tengan los campos requeridos
         const filasValidas = json.filter(row => {
-          if (!row.RAZONSOCIAL || !row.NOMBRE) {
+          if (!row.RAZONSOCIAL || !row.NOMBRE || !row.MES) {
             console.warn('Fila ignorada por falta de datos:', row);
             return false;
           }
@@ -152,41 +152,58 @@ export default function App() {
             console.warn('Fila ignorada por NOMBRE inválido:', row);
             return false;
           }
+          const mes = parseInt(row.MES);
+          if (isNaN(mes) || mes < 1 || mes > 12) {
+            console.warn('Fila ignorada por MES inválido:', row);
+            return false;
+          }
           return true;
         });
 
         if (filasValidas.length === 0) {
-          alert('El archivo Excel no contiene datos válidos. Verifique que tenga las columnas RAZONSOCIAL y NOMBRE.');
+          alert('El archivo Excel no contiene datos válidos. Verifique que tenga las columnas RAZONSOCIAL, NOMBRE y MES.');
           return;
         }
 
         const snapshot = await getDocs(collection(db, "empresas"));
-        const empresasEnFirebase = snapshot.docs.map((doc) => doc.id);
-        const empresasEnExcel = filasValidas.map(row => row.RAZONSOCIAL);
+        const empresasExistentes = {};
+        
+        // Crear un mapa de empresas existentes
+        snapshot.docs.forEach(doc => {
+          empresasExistentes[doc.id] = doc.data();
+        });
 
-        // Empresas a eliminar: están en Firebase pero no en Excel
-        const empresasAEliminar = empresasEnFirebase.filter(id => !empresasEnExcel.includes(id));
+        let empresasAgregadas = 0;
+        let empresasActualizadas = 0;
 
-        // Empresas a agregar: están en Excel pero no en Firebase
-        const empresasAAgregar = empresasEnExcel.filter(nombre => !empresasEnFirebase.includes(nombre));
-
-        // Eliminar empresas que ya no están en el Excel
-        for (const id of empresasAEliminar) {
-          await deleteDoc(doc(db, "empresas", id));
-        }
-
-        // Agregar solo empresas nuevas
+        // Procesar cada fila del Excel
         for (const row of filasValidas) {
           const nombre = row.RAZONSOCIAL;
           const equipo = row.NOMBRE.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+          const mesNumero = parseInt(row.MES);
+          
+          // Convertir número de mes a nombre del mes en español
+          const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", 
+                        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+          const añoActual = new Date().getFullYear();
+          const mesNombre = `${meses[mesNumero - 1]} ${añoActual}`;
 
-          if (empresasAAgregar.includes(nombre)) {
+          if (empresasExistentes[nombre]) {
+            // Empresa existe: mantener llamadas existentes
+            const empresaExistente = empresasExistentes[nombre];
+            await setDoc(doc(db, "empresas", nombre), {
+              ...empresaExistente,
+              equipo, // Actualizar equipo por si cambió
+            });
+            empresasActualizadas++;
+          } else {
+            // Empresa nueva: crear con llamadas vacías
             await setDoc(doc(db, "empresas", nombre), {
               empresa: nombre,
               equipo,
-              mes,
               llamadas: [],
             });
+            empresasAgregadas++;
           }
         }
 
@@ -195,7 +212,7 @@ export default function App() {
         const nuevasEmpresas = nuevoSnapshot.docs.map((doc) => doc.data());
         setData(nuevasEmpresas);
 
-        alert(`Importación completada. ${empresasAAgregar.length} empresas agregadas, ${empresasAEliminar.length} empresas eliminadas.`);
+        alert(`Importación completada. ${empresasAgregadas} empresas nuevas agregadas, ${empresasActualizadas} empresas actualizadas. El historial de llamadas se mantiene intacto.`);
       } catch (error) {
         console.error('Error al importar Excel:', error);
         alert('Error al importar el archivo Excel. Por favor, verifique el formato del archivo.');
@@ -1149,6 +1166,7 @@ export default function App() {
           <ul className="space-y-2 ml-4 mb-4">
             <li>• Columna A: <span className="font-mono bg-blue-800/50 px-2 py-1 rounded">RAZONSOCIAL</span> (Nombre de la empresa)</li>
             <li>• Columna B: <span className="font-mono bg-blue-800/50 px-2 py-1 rounded">NOMBRE</span> (Nombre del equipo)</li>
+            <li>• Columna C: <span className="font-mono bg-blue-800/50 px-2 py-1 rounded">MES</span> (Número del mes: 1-12)</li>
           </ul>
           <p className="mb-4 text-blue-300">Las filas sin estos datos serán ignoradas automáticamente.</p>
           <button
