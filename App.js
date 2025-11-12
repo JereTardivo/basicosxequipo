@@ -51,6 +51,7 @@ export default function App() {
   const [mesSeleccionado, setMesSeleccionado] = useState("");
   const [menuInformesVisible, setMenuInformesVisible] = useState(false);
   const [mostrarBannerExcel, setMostrarBannerExcel] = useState(false);
+  const [cargandoEmpresas, setCargandoEmpresas] = useState(true);
 
 
   const [equipoFilter, setEquipoFilter] = useState(() => {
@@ -685,6 +686,8 @@ export default function App() {
 
   const obtenerEmpresas = async (mesId = mesActualId) => {
     try {
+      setCargandoEmpresas(true);
+      
       // Primero intentar migración automática si es el mes actual
       if (mesId === mesActualId) {
         await migrarEmpresasNuevoMes();
@@ -696,8 +699,10 @@ export default function App() {
         ...doc.data()
       }));
       setData(lista);
+      setCargandoEmpresas(false);
     } catch (error) {
       console.error("Error obteniendo empresas:", error);
+      setCargandoEmpresas(false);
     }
   };
 
@@ -727,7 +732,7 @@ export default function App() {
   }, [equipoFilter, isLogged]);
 
   useEffect(() => {
-    const inicializarMesActual = async () => {
+    const inicializarApp = async () => {
       if (typeof window === "undefined") return;
 
       try {
@@ -740,12 +745,12 @@ export default function App() {
         // Guardar el mes actual para referencia
         localStorage.setItem("mesActualId", mesActualId);
       } catch (error) {
-        console.error("Error al inicializar mes actual:", error);
+        console.error("Error al inicializar aplicación:", error);
       }
     };
 
-    inicializarMesActual();
-  }, [mesActualId]);
+    inicializarApp();
+  }, []); // Solo ejecutar una vez al montar el componente
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, `empresas-${mesActualId}`), (snapshot) => {
@@ -1187,6 +1192,14 @@ export default function App() {
             />
           </div>
 
+          {/* Filtro Mes */}
+          <div className="flex items-center bg-blue-700 border border-blue-600 rounded-2xl-md px-2">
+            <span className="text-blue-200 mr-2 text-sm font-semibold">📅</span>
+            <div className="p-2 w-full text-blue-100 text-sm font-medium">
+              {mesActual.charAt(0).toUpperCase() + mesActual.slice(1)}
+            </div>
+          </div>
+
           {/* Filtro Equipo */}
           <div className="flex items-center bg-gray-700 border border-gray-600 rounded-2xl-md px-2">
             <Users size={18} className="text-gray-200 mr-2" />
@@ -1267,9 +1280,24 @@ export default function App() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-start auto-rows-min grid-flow-dense">
-
-        {sortedData.map((item, index) => {
+      {cargandoEmpresas ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-300">Cargando empresas del {mesActual}...</p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-start auto-rows-min grid-flow-dense">
+          {sortedData.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <p className="text-gray-400 text-lg">No hay empresas para mostrar en {mesActual}</p>
+              <p className="text-gray-500 text-sm mt-2">
+                {isFlexxus ? "Importa un archivo Excel o agrega empresas manualmente" : "Contacta al administrador"}
+              </p>
+            </div>
+          ) : (
+            sortedData.map((item, index) => {
           const mesActual = new Date().toLocaleDateString("es-AR", {
           month: "long",
           year: "numeric"
@@ -1288,9 +1316,10 @@ export default function App() {
               </Card>
             </div>
           );
-        })}
-
-      </div>
+            })
+          )}
+        </div>
+      )}
 
 
       {
