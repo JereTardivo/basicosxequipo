@@ -112,9 +112,11 @@ export default function App() {
           setIsLogged(true);
           setNombreUsuario(data.nombre || data.usuario);
           setUserDocId(data.usuario);
-          setEquipoFilter((data.equipo || "").toLowerCase());
+          const equipoLowercase = (data.equipo || "").toLowerCase();
+          setEquipoFilter(equipoLowercase);
           setIsFlexxus(!data.equipo);
           localStorage.setItem("isFlexxus", (!data.equipo).toString());
+          localStorage.setItem("equipoSeleccionado", equipoLowercase);
           setLoginError("");
           setLoginModal(false);
           cargarMesesDisponibles();
@@ -1109,21 +1111,25 @@ export default function App() {
           {/* Filtro Equipo */}
           <div className="flex items-center bg-gray-700 border border-gray-600 rounded-2xl-md px-2">
             <Users size={18} className="text-gray-200 mr-2" />
-            <select
-              value={equipoFilter}
-              onChange={(e) => setEquipoFilter(e.target.value)}
-              disabled={!isFlexxus}
-              className={`bg-gray-700 text-gray-200 border-none p-2 w-full appearance-none ${!isFlexxus ? "opacity-60 cursor-not-allowed" : ""
-                }`}
-            >
-              <option value="">Todos los equipos</option>
-              <option value="equipo 1 (gz)">EQUIPO 1 (GZ)</option>
-              <option value="equipo 2 (fp)">EQUIPO 2 (FP)</option>
-              <option value="equipo 3 (jt)">EQUIPO 3 (JT)</option>
-              <option value="equipo 4 (mc)">EQUIPO 4 (MC)</option>
-              <option value="equipo 5 (ga)">EQUIPO 5 (GA)</option>
-              <option value="equipo corralon (kb)">EQUIPO CORRALON (KB)</option>
-            </select>
+            {isFlexxus ? (
+              <select
+                value={equipoFilter}
+                onChange={(e) => setEquipoFilter(e.target.value)}
+                className="bg-gray-700 text-gray-200 border-none p-2 w-full appearance-none"
+              >
+                <option value="">Todos los equipos</option>
+                <option value="equipo 1 (gz)">EQUIPO 1 (GZ)</option>
+                <option value="equipo 2 (fp)">EQUIPO 2 (FP)</option>
+                <option value="equipo 3 (jt)">EQUIPO 3 (JT)</option>
+                <option value="equipo 4 (mc)">EQUIPO 4 (MC)</option>
+                <option value="equipo 5 (ga)">EQUIPO 5 (GA)</option>
+                <option value="equipo corralon (kb)">EQUIPO CORRALON (KB)</option>
+              </select>
+            ) : (
+              <div className="p-2 w-full text-gray-200">
+                {equipoFilter ? equipoFilter.toUpperCase() : "Sin equipo asignado"}
+              </div>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2 ml-auto">
