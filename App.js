@@ -1426,7 +1426,7 @@ export default function App() {
                             />
                             <div className="flex justify-end gap-2">
                               <Button onClick={() => setEditandoIndex(null)} className="bg-red-500 text-white px-2 py-1">Cancelar</Button>
-                              <Button onClick={() => guardarEdicion(i)} className="bg-green-500 text-white px-2 py-1">Guardar</Button>
+                              <Button onClick={() => guardarEdicion(indexReal)} className="bg-green-500 text-white px-2 py-1">Guardar</Button>
                             </div>
                           </>
                         ) : (
