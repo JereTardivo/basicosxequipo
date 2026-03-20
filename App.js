@@ -380,12 +380,13 @@ export default function App() {
     }
 
     const updated = data.map((item) => {
-      if (item.empresa === selectedEmpresa && item.llamadas.length < 5) {
-        const mesActual = new Date().toLocaleDateString("es-AR", {
+      const llamadasActuales = item.llamadas || [];
+      if (item.empresa === selectedEmpresa && llamadasActuales.length < 5) {
+        const mesActualLocal = new Date().toLocaleDateString("es-AR", {
           month: "long",
           year: "numeric"
-        }).replace(" de ", " ");
-        const nuevas = [...item.llamadas, { ...formValues, agente: nombreUsuario, mes: mesActual }];
+        }).replace(" de ", " ").toLowerCase();
+        const nuevas = [...llamadasActuales, { ...formValues, agente: nombreUsuario, mes: mesActualLocal }];
         const updatedItem = { ...item, llamadas: nuevas };
         const docId = item.empresa;
         setDoc(doc(db, "empresas", docId), updatedItem);
@@ -448,7 +449,9 @@ export default function App() {
     if (orden === "nombre") {
       return a.empresa.localeCompare(b.empresa);
     } else if (orden === "llamadas") {
-      return b.llamadas.length - a.llamadas.length;
+      const llamadasA = (a.llamadas || []).filter((l) => (l.mes || "").toLowerCase() === mesActual).length;
+      const llamadasB = (b.llamadas || []).filter((l) => (l.mes || "").toLowerCase() === mesActual).length;
+      return llamadasB - llamadasA;
     }
     return 0;
   });
@@ -547,12 +550,12 @@ export default function App() {
 
   const guardarEdicion = async (index) => {
     const empresaActual = selectedEmpresa;
-    const mesActual = new Date().toLocaleDateString("es-AR", {
+    const mesActualLocal = new Date().toLocaleDateString("es-AR", {
       month: "long",
       year: "numeric"
-    }).replace(" de ", " ");
+    }).replace(" de ", " ").toLowerCase();
     const nuevasLlamadas = [...selectedEmpresaData.llamadas];
-    nuevasLlamadas[index] = { ...editLlamada, agente: nuevasLlamadas[index].agente, mes: mesActual };
+    nuevasLlamadas[index] = { ...editLlamada, agente: nuevasLlamadas[index].agente, mes: mesActualLocal };
 
     const empresaActualizada = {
       ...selectedEmpresaData,
@@ -1318,11 +1321,12 @@ export default function App() {
             </div>
           ) : (
             sortedData.map((item, index) => {
-          const mesActual = new Date().toLocaleDateString("es-AR", {
+          const mesActualLocal = new Date().toLocaleDateString("es-AR", {
           month: "long",
           year: "numeric"
-        }).replace(" de ", " ");
-          const llamadasMesActual = item.llamadas.filter((l) => (l.mes || "").toLowerCase() === mesActual);
+        }).replace(" de ", " ").toLowerCase();
+          const llamadasActuales = item.llamadas || [];
+          const llamadasMesActual = llamadasActuales.filter((l) => (l.mes || "").toLowerCase() === mesActualLocal);
           const bgColor = llamadasMesActual.length >= 5 ? "bg-red-400/20" : "bg-green-400/20";
 
 
@@ -1344,7 +1348,8 @@ export default function App() {
 
       {
         modalOpen && selectedEmpresaData && (() => {
-          const llamadasMesActual = selectedEmpresaData.llamadas.filter((l) => l.mes === mesActual);
+          const llamadasActuales = selectedEmpresaData.llamadas || [];
+          const llamadasMesActual = llamadasActuales.filter((l) => (l.mes || "").toLowerCase() === mesActual);
 
           return (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
