@@ -381,11 +381,12 @@ export default function App() {
 
     const updated = data.map((item) => {
       const llamadasActuales = item.llamadas || [];
-      if (item.empresa === selectedEmpresa && llamadasActuales.length < 5) {
-        const mesActualLocal = new Date().toLocaleDateString("es-AR", {
-          month: "long",
-          year: "numeric"
-        }).replace(" de ", " ").toLowerCase();
+      const mesActualLocal = new Date().toLocaleDateString("es-AR", {
+        month: "long",
+        year: "numeric"
+      }).replace(" de ", " ").toLowerCase();
+      const llamadasMesActual = llamadasActuales.filter((l) => (l.mes || "").toLowerCase() === mesActualLocal);
+      if (item.empresa === selectedEmpresa && llamadasMesActual.length < 5) {
         const nuevas = [...llamadasActuales, { ...formValues, agente: nombreUsuario, mes: mesActualLocal }];
         const updatedItem = { ...item, llamadas: nuevas };
         const docId = item.empresa;
@@ -572,6 +573,26 @@ export default function App() {
     setData(nuevasEmpresas);
     setSelectedEmpresaData(empresaActualizada);
     setEditandoIndex(null);
+  };
+
+  const eliminarLlamada = async (index) => {
+    const empresaActual = selectedEmpresa;
+    const llamadasActuales = selectedEmpresaData.llamadas || [];
+    const nuevasLlamadas = llamadasActuales.filter((_, i) => i !== index);
+
+    const empresaActualizada = {
+      ...selectedEmpresaData,
+      llamadas: nuevasLlamadas,
+    };
+
+    await setDoc(doc(db, "empresas", empresaActual), empresaActualizada);
+
+    const nuevasEmpresas = data.map((e) =>
+      e.empresa === empresaActual ? empresaActualizada : e
+    );
+    setData(nuevasEmpresas);
+    setSelectedEmpresaData(empresaActualizada);
+    toast.success("Llamada eliminada");
   };
 
   const handlePasswordChange = async () => {
@@ -1360,7 +1381,9 @@ export default function App() {
 
                 {llamadasMesActual.length > 0 && (
                   <ul className="space-y-4 mb-4">
-                    {llamadasMesActual.map((l, i) => (
+                    {llamadasMesActual.map((l, i) => {
+                      const indexReal = llamadasActuales.findIndex((ll) => ll === l);
+                      return (
                       <li key={i} className="border-b border-gray-600 pb-2 text-sm relative">
                         {editandoIndex === i ? (
                           <>
@@ -1414,21 +1437,32 @@ export default function App() {
                                 Ticket: <a href={`https://soporte.flexxus.com.ar/tickets/${l.ticket}`} target="_blank" className="underline text-blue-400">{l.ticket}</a> | Agente: {l.agente}
                               </span>
                             </div>
-                            {(l.agente === nombreUsuario || nombreUsuario === "Flexxus") && (
-                              <Pencil
-                                size={16}
-                                className="absolute top-0 right-0 cursor-pointer text-gray-300 hover:scale-110 transition-transform"
-                                title="Editar llamada"
-                                onClick={() => {
-                                  setEditandoIndex(i);
-                                  setEditLlamada(l);
-                                }}
-                              />
-                            )}
+                            <div className="absolute top-0 right-0 flex gap-2">
+                              {(l.agente === nombreUsuario || nombreUsuario === "Flexxus") && (
+                                <Pencil
+                                  size={16}
+                                  className="cursor-pointer text-gray-300 hover:scale-110 transition-transform"
+                                  title="Editar llamada"
+                                  onClick={() => {
+                                    setEditandoIndex(i);
+                                    setEditLlamada(l);
+                                  }}
+                                />
+                              )}
+                              {nombreUsuario === "Flexxus" && (
+                                <Trash2
+                                  size={16}
+                                  className="cursor-pointer text-red-400 hover:scale-110 transition-transform"
+                                  title="Eliminar llamada"
+                                  onClick={() => eliminarLlamada(indexReal)}
+                                />
+                              )}
+                            </div>
                           </>
                         )}
                       </li>
-                    ))}
+                    );
+                    })}
                   </ul>
                 )}
 
